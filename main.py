@@ -3,7 +3,7 @@ Mintのメインソースコード
 """
 
 # まずライブラリのインポート(Quart, asyncpg, os)
-from quart import Quart, render_template, send_from_directory, request
+from quart import Quart, render_template, send_from_directory, request, Response
 import asyncpg
 import os
 from tools import BBSTools
@@ -193,8 +193,10 @@ async def subjecttxt(bbs: str):
 		raw_threads = await connection.fetch("SELECT * FROM threads WHERE bbs_id = $1", bbs)
 	ss = []
 	for thread in raw_threads:
-		ss.append(f'{thread["id"]}<>{thread["title"]} ({thread["count"]})')
-	return "\n".join(ss)
+		ss.append(f'{thread["id"]}.dat<>{thread["title"]} ({thread["count"]})')
+	content = "\n".join(ss)
+	response = Response(content, content_type="text/plain")
+	return response
 
 @app.route("/<string:bbs>/SETTING.TXT")
 async def threadSettingTxt(bbs: str):
@@ -207,7 +209,9 @@ async def threadSettingTxt(bbs: str):
 		s.append(f'BBS_NAME_COUNT=128')
 		s.append('BBS_MAIL_COUNT=64')
 		s.append('BBS_MESSAGE_COUNT=2048')
-		return "\n".join(s)
+		content = "\n".join(s)
+		response = Response(content, content_type="text/plain")
+		return response
 
 @app.route("/<string:bbs>/dat/<int:key>.dat")
 async def threadDat(bbs: str, key: int):
