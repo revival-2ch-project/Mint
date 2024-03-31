@@ -32,10 +32,8 @@ class BBSTools():
 				trip = des_crypt.hash(tripkey, salt=salt.decode('shift-jis'))
 				trip = trip[-10:]
 			else:
-				key = key.encode('shift_jis')
-				assert len(key) >= 12
-				
-				code = hashlib.sha1(key).digest()
+				trip_key = trip_key.encode('shift_jis')
+				code = hashlib.sha1(trip_key).digest()
 				code = base64.b64encode(code, b'./')
 				code = code[:12]
 				trip = code.decode('utf8')
