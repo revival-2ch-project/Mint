@@ -164,6 +164,46 @@ async def write():
 			)
 		return await render_template("kakikomi_ok.html", bbs_id=bbs, key=int(date.timestamp())if key is None else key)
 
+@app.route("/<string:bbs>/subject.txt")
+async def subjecttxt(bbs: str):
+	async with app.db_pool.acquire() as connection:
+		raw_threads = await connection.fetch("SELECT * FROM threads WHERE bbs_id = $1", bbs)
+	ss = []
+	for thread in raw_threads:
+		ss.append(f"{thread.id}<>{thread.title} ({thread.count})")
+	return "\n".join
+
+@app.route("/<string:bbs>/SETTING.TXT")
+async def threadSettingTxt(bbs: str):
+	async with app.db_pool.acquire() as connection:
+		values = await connection.fetchrow("SELECT * FROM bbs WHERE id = $1", bbs)
+		s = []
+		s.append(f'BBS_TITLE={values["bbs_name"]}')
+		s.append(f'BBS_NONAME_NAME={values["anonymous_name"]}')
+		s.append(f'BBS_SUBJECT_COUNT=128')
+		s.append(f'BBS_NAME_COUNT=128')
+		s.append('BBS_MAIL_COUNT=64')
+		s.append('BBS_MESSAGE_COUNT=2048')
+		return "\n".join(s)
+
+@app.route("/<string:bbs>/dat/<int:key>.dat")
+async def threadDat(bbs: str, key: int):
+	async with app.db_pool.acquire() as connection:
+		values = await connection.fetchrow("SELECT * FROM threads WHERE id = $1 AND bbs_id = $2", key, bbs)
+		if values is None:
+			return "Thread not found", 404  # スレッドが見つからない場合は404エラーを返すなどの処理を行う
+		res_data = json.loads(values["data"])
+		ress = []
+		for i, v in enumerate(res_data.get("data", [])):
+			res_data["data"][i]["date"] = datetime.fromtimestamp(v["date"]).strftime("%Y/%m/%d(%a) %H:%M:%S.%f")
+			res_data["data"][i]["content"] = res_data["data"][i]["content"].replace("\n"," <br> ")
+			res_data["data"][i]["content"] = BBSTools.convert_to_link(res_data["data"][i]["content"])
+			if i == 0:
+				ress.append(f'{res_data["data"][i]["name"]}<>{res_data["data"][i]["mail"]}<>{res_data["data"][i]["date"]} ID: {res_data["data"][i]["id"]}<>{res_data["data"][i]["content"]}<>{res_data["title"]}')
+			else:
+				ress.append(f'{res_data["data"][i]["name"]}<>{res_data["data"][i]["mail"]}<>{res_data["data"][i]["date"]} ID: {res_data["data"][i]["id"]}<>{res_data["data"][i]["content"]}<>')
+		return "\n".join(ress)
+
 @app.route("/test/read.cgi/<string:bbs>/<int:key>/")
 async def threadPage(bbs: str, key: int):
 	async with app.db_pool.acquire() as connection:
@@ -174,6 +214,7 @@ async def threadPage(bbs: str, key: int):
 		for i, v in enumerate(res_data.get("data", [])):
 			res_data["data"][i]["date"] = datetime.fromtimestamp(v["date"]).strftime("%Y/%m/%d(%a) %H:%M:%S.%f")
 			res_data["data"][i]["content"] = res_data["data"][i]["content"].replace("\n"," <br> ")
+			res_data["data"][i]["content"] = BBSTools.convert_to_link(res_data["data"][i]["content"])
 		return await render_template("thread_view.html", data=values, res_data=res_data.get("data", []), bbs_id=bbs, key=key, anonymous_name=await connection.fetchval("SELECT anonymous_name FROM bbs WHERE id = $1", bbs))
 
 @app.errorhandler(404)

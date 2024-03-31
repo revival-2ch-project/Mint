@@ -16,7 +16,7 @@
 		<div class="res">
 			{% for _ in res_data %}
 				<dt>{{ loop.index }} ：<font color="green"><b>{{ _.name }}</b></font>：{{ _.date }} ID:{{ _.id }}</dt>
-				<dd style="overflow-wrap: break-word;"> {{ _.content }} <br><br></dd>
+				<dd style="overflow-wrap: break-word;"> {{ _.content | safe }} <br><br></dd>
 			{% endfor %}
 		</div>
 

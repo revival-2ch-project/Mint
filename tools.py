@@ -30,7 +30,7 @@ class BBSTools():
 			salt = salt.translate(bytes.maketrans(b':;<=>?@[\\]^_`', b'ABCDEFGabcdef'))
 			trip = des_crypt.hash(tripkey, salt=salt.decode('shift-jis'))
 			trip = trip[-10:]
-			return f"{name2}◆{trip}"
+			return f"{name2}</b>◆{trip}<b>"
 		else:
 			return name.replace("◆","◇").replace("★","☆")
 
@@ -57,3 +57,14 @@ class BBSTools():
 		random_string = ''.join(random.choice(letters_and_digits) for _ in range(length))
 		
 		return random_string
+
+	def convert_to_link(text):
+		# 正規表現を使用してURLを抽出
+		url_pattern = r'https?://\S+'
+		urls = re.findall(url_pattern, text)
+		
+		# 抽出したURLを<a>タグで置換して返す
+		for url in urls:
+			text = text.replace(url, f'<a href="{url}">{url}</a>')
+		
+		return text
