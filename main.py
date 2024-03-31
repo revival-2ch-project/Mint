@@ -245,12 +245,4 @@ def page_not_found(error):
 
 # 実行
 if __name__ == "__main__":
-	if os.getenv("IS_RENDER") == "TRUE":
-		# 10000から65535までの数字の範囲を生成し、18013を除外する
-		numbers = [i for i in range(10000, 65536) if i != 18013]
-
-		# リストからランダムに1つの数字を選択する
-		port = random.choice(numbers)
-	else:
-		port = 8080
-	app.run(host="0.0.0.0", port=port)
+	app.run(host="0.0.0.0", port=10000)
