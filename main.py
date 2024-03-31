@@ -6,7 +6,9 @@ Mintのメインソースコード
 from quart import Quart, render_template, send_from_directory, request
 import asyncpg
 import os
-from tools import TripTools
+from tools import BBSTools
+from datetime import datetime
+import json
 
 # .envがあった場合、優先的にロード
 if os.path.isfile(".env"):
@@ -55,15 +57,16 @@ async def bbsPage(bbs: str):
 							  bbs_id = bbs
 				 )
 
-@app.route("/test/bbs.cgi")
+@app.route("/test/bbs.cgi", methods=["POST"])
 async def write():
-	bbs = request.form.get("bbs", "")
-	key = request.form.get("key", 0)
-	time = request.form.get("time", 0)	# 使用する予定なし
-	subject = request.form.get("subject", "")
-	name = request.form.get("FROM", "")
-	mail = request.form.get("mail", "")
-	content = request.form.get("MESSAGE", "")
+	form = await request.form
+	bbs = form.get("bbs", "")
+	key = form.get("key", 0)
+	time = form.get("time", 0)	# 使用する予定なし
+	subject = form.get("subject", "")
+	name = form.get("FROM", "")
+	mail = form.get("mail", "")
+	content = form.get("MESSAGE", "")
 
 	# 板が指定されていない場合 または キーがない場合 かつ タイトルがない場合 または 本文がない場合
 	if (bbs == "") or (key == 0 and subject == "") or (content == ""):
@@ -81,10 +84,59 @@ async def write():
 	if len(mail) > 32:
 		return await render_template("kakikomi_Error.html", message="メール欄の文字数が長すぎます！")
 
-	# トリップ
-	lastName = TripTools.getTripbyName(name)
+	# トリップ / 日時 / ID
+	lastName = BBSTools.getTripbyName(name)
+	date = datetime.now()
+	id = BBSTools.generateIDbyHostandTimestamp(request.remote_addr, date)
 
 	# やっと書き込み処理
+	if subject != "":
+		async with app.db_pool.acquire() as connection:
+			if name == "":
+				name = await connection.fetchval("SELECT anonymous_name FROM bbs WHERE id = $1", bbs)
+			data = {"data": [{
+				"name": name,
+				"mail": mail,
+				"date": int(date.timestamp()),
+				"content": content,
+				"id": id
+			}]}
+			data_json = json.dumps(data)
+			# パラメータを指定してクエリを実行
+			await connection.execute(
+				"INSERT INTO threads (id, bbs_id, created_at, title, data) VALUES ($1, $2, $3, $4, $5)",
+				int(date.timestamp()),
+				bbs,
+				date.now(),
+				subject,
+				data_json,
+				1
+			)
+		return await render_template("kakikomi_ok.html", bbs_id=bbs, key=int(date.timestamp()))
+	else:
+		async with app.db_pool.acquire() as connection:
+			if name == "":
+				name = await connection.fetchval("SELECT anonymous_name FROM bbs WHERE id = $1", bbs)
+			values = await connection.fetchval("SELECT * FROM threads WHERE id = $1", key)
+			count = await connection.fetchval("SELECT count FROM threads WHERE id = $1", key)
+			count += 1
+			data = values.get(data,{})
+			data["data"].append({
+				"name": name,
+				"mail": mail,
+				"date": int(date.timestamp()),
+				"content": content,
+				"id": id
+			})
+			data_json = json.dumps(data["data"])
+			# パラメータを指定してクエリを実行
+			await connection.execute(
+				"UPDATE threads SET data = $2, count = $3 WHERE id = $1",
+				key,
+				data_json,
+				count
+			)
+		return await render_template("kakikomi_ok.html", bbs_id=bbs, key=int(date.timestamp()))
 
 
 
