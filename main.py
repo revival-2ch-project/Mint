@@ -89,6 +89,7 @@ async def write():
 		return await render_template("kakikomi_Error.html", message="本文の文字数が長すぎます！")
 
 	# トリップ / 日時 / ID / エンコード済み本文
+	name = html.escape(name)
 	lastName = BBSTools.getTripbyName(name)
 	date = datetime.now()
 	id = BBSTools.generateIDbyHostandTimestamp(request.remote_addr, date)
@@ -101,7 +102,6 @@ async def write():
 		async with app.db_pool.acquire() as connection:
 			if lastName == "":
 				lastName = await connection.fetchval("SELECT anonymous_name FROM bbs WHERE id = $1", bbs)
-			lastName = html.escape(lastName)
 			data = {"data": [{
 				"name": lastName,
 				"mail": mail,
@@ -126,7 +126,6 @@ async def write():
 		async with app.db_pool.acquire() as connection:
 			if lastName == "":
 				lastName = await connection.fetchval("SELECT anonymous_name FROM bbs WHERE id = $1", bbs)
-			lastName = html.escape(lastName)
 			row = await connection.fetchrow("SELECT data, count FROM threads WHERE id = $1 AND bbs_id = $2", key, bbs)
 			data, count = row[0], row[1]
 			data = json.loads(data)
