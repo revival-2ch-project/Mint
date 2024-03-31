@@ -27,4 +27,5 @@ py main.py
 ```
 python3 main.py
 ```
+Mintはデフォルトではポート**8080**でリッスンします。
 データベースの設定については[database.md](database.md)をお読みください。
