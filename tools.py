@@ -24,12 +24,21 @@ class BBSTools():
 			name2 = result.group(1).replace("◆","◇").replace("★","☆")
 
 			trip_key = result.group(2)
-			tripkey = trip_key.encode('shift_jis')
-			salt = (tripkey + b'H.')[1:3]
-			salt = re.sub(rb'[^\.-z]', b'.', salt)
-			salt = salt.translate(bytes.maketrans(b':;<=>?@[\\]^_`', b'ABCDEFGabcdef'))
-			trip = des_crypt.hash(tripkey, salt=salt.decode('shift-jis'))
-			trip = trip[-10:]
+			if len(trip_key) <= 10:
+				tripkey = trip_key.encode('shift_jis')
+				salt = (tripkey + b'H.')[1:3]
+				salt = re.sub(rb'[^\.-z]', b'.', salt)
+				salt = salt.translate(bytes.maketrans(b':;<=>?@[\\]^_`', b'ABCDEFGabcdef'))
+				trip = des_crypt.hash(tripkey, salt=salt.decode('shift-jis'))
+				trip = trip[-10:]
+			else:
+				key = key.encode('shift_jis')
+				assert len(key) >= 12
+				
+				code = hashlib.sha1(key).digest()
+				code = base64.b64encode(code, b'./')
+				code = code[:12]
+				trip = code.decode('utf8')
 			return f"{name2}</b>◆{trip}<b>"
 		else:
 			return name.replace("◆","◇").replace("★","☆")
