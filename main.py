@@ -14,7 +14,7 @@ import html
 from collections import defaultdict
 import random
 
-rentoukisei = defaultdict(lambda: int(datetime.now().timestamp()))
+rentoukisei = defaultdict(lambda: int(datetime.now().timestamp()) - 10)
 
 # .envがあった場合、優先的にロード
 if os.path.isfile(".env"):
@@ -111,6 +111,7 @@ async def write():
 	# やっと書き込み処理
 	# ...の前に連投規制
 	if int(date.timestamp()) >= rentoukisei[ipaddr] + 10:
+		rentoukisei[ipaddr] = date.timestamp()
 		if subject != "":
 			subject = html.escape(subject)
 			async with app.db_pool.acquire() as connection:
