@@ -184,7 +184,7 @@ async def write():
 				)
 			return await render_template("kakikomi_ok.html", bbs_id=bbs, key=int(date.timestamp())if key is None else key)
 	else:
-		return await render_template("kakikomi_Error.html", message=f"連投規制中です！あと{(rentoukisei[ipaddr] + 10) - int(date.timestamp)}秒お待ち下さい。")
+		return await render_template("kakikomi_Error.html", message=f"連投規制中です！あと{(rentoukisei[ipaddr] + 10) - int(date.timestamp())}秒お待ち下さい。")
 
 @app.route("/<string:bbs>/subject.txt")
 async def subjecttxt(bbs: str):
@@ -193,7 +193,7 @@ async def subjecttxt(bbs: str):
 	ss = []
 	for thread in raw_threads:
 		ss.append(f'{thread["id"]}<>{thread["title"]} ({thread["count"]})')
-	return "\n".join
+	return "\n".join()
 
 @app.route("/<string:bbs>/SETTING.TXT")
 async def threadSettingTxt(bbs: str):
