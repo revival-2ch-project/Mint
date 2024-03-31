@@ -11,6 +11,9 @@ from datetime import datetime
 import json
 import locale
 import html
+from collections import defaultdict
+
+rentoukisei = defaultdict(lambda: int(datetime.now().timestamp()))
 
 # .envがあった場合、優先的にロード
 if os.path.isfile(".env"):
@@ -105,78 +108,82 @@ async def write():
 	mail = html.escape(content)
 
 	# やっと書き込み処理
-	if subject != "":
-		subject = html.escape(subject)
-		async with app.db_pool.acquire() as connection:
-			if lastName == "":
-				lastName = await connection.fetchval("SELECT anonymous_name FROM bbs WHERE id = $1", bbs)
-			data = {"data": [{
-				"name": lastName,
-				"mail": mail,
-				"date": date.timestamp(),
-				"content": content,
-				"id": id,
-				"ipaddr": ipaddr
-			}]}
-			data_json = json.dumps(data)
-			# パラメータを指定してクエリを実行
-			await connection.execute(
-				"INSERT INTO threads (thread_id, id, bbs_id, created_at, title, data, count) VALUES ($1, $2, $3, $4, $5, $6, $7)",
-				BBSTools.generateThreadID(10),
-				int(date.timestamp()),
-				bbs,
-				date.now(),
-				subject,
-				data_json,
-				1
-			)
-		return await render_template("kakikomi_ok.html", bbs_id=bbs, key=int(date.timestamp()))
+	# ...の前に連投規制
+	if int(date.timestamp) >= rentoukisei[ipaddr] + 10:
+		if subject != "":
+			subject = html.escape(subject)
+			async with app.db_pool.acquire() as connection:
+				if lastName == "":
+					lastName = await connection.fetchval("SELECT anonymous_name FROM bbs WHERE id = $1", bbs)
+				data = {"data": [{
+					"name": lastName,
+					"mail": mail,
+					"date": date.timestamp(),
+					"content": content,
+					"id": id,
+					"ipaddr": ipaddr
+				}]}
+				data_json = json.dumps(data)
+				# パラメータを指定してクエリを実行
+				await connection.execute(
+					"INSERT INTO threads (thread_id, id, bbs_id, created_at, title, data, count) VALUES ($1, $2, $3, $4, $5, $6, $7)",
+					BBSTools.generateThreadID(10),
+					int(date.timestamp()),
+					bbs,
+					date.now(),
+					subject,
+					data_json,
+					1
+				)
+			return await render_template("kakikomi_ok.html", bbs_id=bbs, key=int(date.timestamp()))
+		else:
+			async with app.db_pool.acquire() as connection:
+				if lastName == "":
+					lastName = await connection.fetchval("SELECT anonymous_name FROM bbs WHERE id = $1", bbs)
+				row = await connection.fetchrow("SELECT data, count FROM threads WHERE id = $1 AND bbs_id = $2", key, bbs)
+				data, count = row[0], row[1]
+				data = json.loads(data)
+				if count >= 1000:
+					return await render_template("kakikomi_Error.html", message="このスレッドにはもう書けません。")
+				elif count == 999:
+					count += 1
+					data["data"].append({
+						"name": lastName,
+						"mail": mail,
+						"date": date.timestamp(),
+						"content": content,
+						"id": id,
+						"ipaddr": ipaddr
+					})
+					data["data"].append({
+						"name": "Over 1000 Thread",
+						"mail": "",
+						"date": date.timestamp(),
+						"content": "レス数が1000を超えたため、このスレッドにはもう書けません...",
+						"id": "System"
+					})
+				else:
+					count += 1
+					data["data"].append({
+						"name": lastName,
+						"mail": mail,
+						"date": date.timestamp(),
+						"content": content,
+						"id": id,
+						"ipaddr": ipaddr
+					})
+				data_json = json.dumps(data)
+				# パラメータを指定してクエリを実行
+				await connection.execute(
+					"UPDATE threads SET data = $3, count = $4 WHERE id = $1 AND bbs_id = $2",
+					key,
+					bbs,
+					data_json,
+					count
+				)
+			return await render_template("kakikomi_ok.html", bbs_id=bbs, key=int(date.timestamp())if key is None else key)
 	else:
-		async with app.db_pool.acquire() as connection:
-			if lastName == "":
-				lastName = await connection.fetchval("SELECT anonymous_name FROM bbs WHERE id = $1", bbs)
-			row = await connection.fetchrow("SELECT data, count FROM threads WHERE id = $1 AND bbs_id = $2", key, bbs)
-			data, count = row[0], row[1]
-			data = json.loads(data)
-			if count >= 1000:
-				return await render_template("kakikomi_Error.html", message="このスレッドにはもう書けません。")
-			elif count == 999:
-				count += 1
-				data["data"].append({
-					"name": lastName,
-					"mail": mail,
-					"date": date.timestamp(),
-					"content": content,
-					"id": id,
-					"ipaddr": ipaddr
-				})
-				data["data"].append({
-					"name": "Over 1000 Thread",
-					"mail": "",
-					"date": date.timestamp(),
-					"content": "レス数が1000を超えたため、このスレッドにはもう書けません...",
-					"id": "System"
-				})
-			else:
-				count += 1
-				data["data"].append({
-					"name": lastName,
-					"mail": mail,
-					"date": date.timestamp(),
-					"content": content,
-					"id": id,
-					"ipaddr": ipaddr
-				})
-			data_json = json.dumps(data)
-			# パラメータを指定してクエリを実行
-			await connection.execute(
-				"UPDATE threads SET data = $3, count = $4 WHERE id = $1 AND bbs_id = $2",
-				key,
-				bbs,
-				data_json,
-				count
-			)
-		return await render_template("kakikomi_ok.html", bbs_id=bbs, key=int(date.timestamp())if key is None else key)
+		return await render_template("kakikomi_Error.html", message=f"連投規制中です！あと{(rentoukisei[ipaddr] + 10) - int(date.timestamp)}秒お待ち下さい。")
 
 @app.route("/<string:bbs>/subject.txt")
 async def subjecttxt(bbs: str):
