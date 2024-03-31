@@ -86,19 +86,22 @@ async def write():
 	if len(mail) > 32:
 		return await render_template("kakikomi_Error.html", message="メール欄の文字数が長すぎます！")
 	if len(content) > 512:
-		return await render_template("kakikomi_Error.html", message="メール欄の文字数が長すぎます！")
+		return await render_template("kakikomi_Error.html", message="本文の文字数が長すぎます！")
 
 	# トリップ / 日時 / ID / エンコード済み本文
 	lastName = BBSTools.getTripbyName(name)
 	date = datetime.now()
 	id = BBSTools.generateIDbyHostandTimestamp(request.remote_addr, date)
 	content = html.escape(content)
+	mail = html.escape(content)
 
 	# やっと書き込み処理
 	if subject != "":
+		subject = html.escape(subject)
 		async with app.db_pool.acquire() as connection:
 			if lastName == "":
 				lastName = await connection.fetchval("SELECT anonymous_name FROM bbs WHERE id = $1", bbs)
+			lastName = html.escape(lastName)
 			data = {"data": [{
 				"name": lastName,
 				"mail": mail,
@@ -123,6 +126,7 @@ async def write():
 		async with app.db_pool.acquire() as connection:
 			if lastName == "":
 				lastName = await connection.fetchval("SELECT anonymous_name FROM bbs WHERE id = $1", bbs)
+			lastName = html.escape(lastName)
 			row = await connection.fetchrow("SELECT data, count FROM threads WHERE id = $1 AND bbs_id = $2", key, bbs)
 			data, count = row[0], row[1]
 			data = json.loads(data)
@@ -223,4 +227,4 @@ def page_not_found(error):
 
 # 実行
 if __name__ == "__main__":
-	app.run()
+	app.run(host="0.0.0.0", port=8080)
