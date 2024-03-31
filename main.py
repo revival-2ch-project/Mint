@@ -12,6 +12,7 @@ import json
 import locale
 import html
 from collections import defaultdict
+import random
 
 rentoukisei = defaultdict(lambda: int(datetime.now().timestamp()))
 
@@ -191,7 +192,7 @@ async def subjecttxt(bbs: str):
 		raw_threads = await connection.fetch("SELECT * FROM threads WHERE bbs_id = $1", bbs)
 	ss = []
 	for thread in raw_threads:
-		ss.append(f"{thread.id}<>{thread.title} ({thread.count})")
+		ss.append(f"{thread["id"]}<>{thread["title"]} ({thread["count"]})")
 	return "\n".join
 
 @app.route("/<string:bbs>/SETTING.TXT")
@@ -244,4 +245,12 @@ def page_not_found(error):
 
 # 実行
 if __name__ == "__main__":
-	app.run(host="0.0.0.0", port=10000)
+	if os.getenv("IS_RENDER") == "TRUE":
+		# 10000から65535までの数字の範囲を生成し、18013を除外する
+		numbers = [i for i in range(10000, 65536) if i != 18013]
+
+		# リストからランダムに1つの数字を選択する
+		port = random.choice(numbers)
+	else:
+		port = 8080
+	app.run(host="0.0.0.0", port=port)
