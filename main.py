@@ -70,7 +70,7 @@ async def write():
 	mail = form.get("mail", "")
 	content = form.get("MESSAGE", "")
 
-	headers = await request.headers
+	headers = request.headers
 	forwarded_for = headers.get('X-Forwarded-For')
 	
 	if forwarded_for:
