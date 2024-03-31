@@ -194,7 +194,7 @@ async def subjecttxt(bbs: str):
 	ss = []
 	for thread in raw_threads:
 		ss.append(f'{thread["id"]}<>{thread["title"]} ({thread["count"]})')
-	return "\n".join()
+	return "\n".join(ss)
 
 @app.route("/<string:bbs>/SETTING.TXT")
 async def threadSettingTxt(bbs: str):
@@ -222,7 +222,7 @@ async def threadDat(bbs: str, key: int):
 			res_data["data"][i]["content"] = res_data["data"][i]["content"].replace("\n"," <br> ")
 			res_data["data"][i]["content"] = BBSTools.convert_to_link(res_data["data"][i]["content"])
 			if i == 0:
-				ress.append(f'{res_data["data"][i]["name"]}<>{res_data["data"][i]["mail"]}<>{res_data["data"][i]["date"]} ID: {res_data["data"][i]["id"]}<>{res_data["data"][i]["content"]}<>{res_data["title"]}')
+				ress.append(f'{res_data["data"][i]["name"]}<>{res_data["data"][i]["mail"]}<>{res_data["data"][i]["date"]} ID: {res_data["data"][i]["id"]}<>{res_data["data"][i]["content"]}<>{values["title"]}')
 			else:
 				ress.append(f'{res_data["data"][i]["name"]}<>{res_data["data"][i]["mail"]}<>{res_data["data"][i]["date"]} ID: {res_data["data"][i]["id"]}<>{res_data["data"][i]["content"]}<>')
 		return "\n".join(ress)
