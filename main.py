@@ -110,7 +110,7 @@ async def write():
 
 	# やっと書き込み処理
 	# ...の前に連投規制
-	if int(date.timestamp) >= rentoukisei[ipaddr] + 10:
+	if int(date.timestamp()) >= rentoukisei[ipaddr] + 10:
 		if subject != "":
 			subject = html.escape(subject)
 			async with app.db_pool.acquire() as connection:
