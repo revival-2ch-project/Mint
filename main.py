@@ -9,6 +9,8 @@ import os
 from tools import BBSTools
 from datetime import datetime
 import json
+import locale
+import html
 
 # .envがあった場合、優先的にロード
 if os.path.isfile(".env"):
@@ -61,7 +63,7 @@ async def bbsPage(bbs: str):
 async def write():
 	form = await request.form
 	bbs = form.get("bbs", "")
-	key = form.get("key", 0)
+	key = form.get("key", 0, type=int)
 	time = form.get("time", 0)	# 使用する予定なし
 	subject = form.get("subject", "")
 	name = form.get("FROM", "")
@@ -83,28 +85,32 @@ async def write():
 		return await render_template("kakikomi_Error.html", message="名前欄の文字数が長すぎます！")
 	if len(mail) > 32:
 		return await render_template("kakikomi_Error.html", message="メール欄の文字数が長すぎます！")
+	if len(content) > 512:
+		return await render_template("kakikomi_Error.html", message="メール欄の文字数が長すぎます！")
 
-	# トリップ / 日時 / ID
+	# トリップ / 日時 / ID / エンコード済み本文
 	lastName = BBSTools.getTripbyName(name)
 	date = datetime.now()
 	id = BBSTools.generateIDbyHostandTimestamp(request.remote_addr, date)
+	content = html.escape(content)
 
 	# やっと書き込み処理
 	if subject != "":
 		async with app.db_pool.acquire() as connection:
-			if name == "":
-				name = await connection.fetchval("SELECT anonymous_name FROM bbs WHERE id = $1", bbs)
+			if lastName == "":
+				lastName = await connection.fetchval("SELECT anonymous_name FROM bbs WHERE id = $1", bbs)
 			data = {"data": [{
-				"name": name,
+				"name": lastName,
 				"mail": mail,
-				"date": int(date.timestamp()),
+				"date": date.timestamp(),
 				"content": content,
 				"id": id
 			}]}
 			data_json = json.dumps(data)
 			# パラメータを指定してクエリを実行
 			await connection.execute(
-				"INSERT INTO threads (id, bbs_id, created_at, title, data) VALUES ($1, $2, $3, $4, $5)",
+				"INSERT INTO threads (thread_id, id, bbs_id, created_at, title, data, count) VALUES ($1, $2, $3, $4, $5, $6, $7)",
+				BBSTools.generateThreadID(10),
 				int(date.timestamp()),
 				bbs,
 				date.now(),
@@ -115,30 +121,60 @@ async def write():
 		return await render_template("kakikomi_ok.html", bbs_id=bbs, key=int(date.timestamp()))
 	else:
 		async with app.db_pool.acquire() as connection:
-			if name == "":
-				name = await connection.fetchval("SELECT anonymous_name FROM bbs WHERE id = $1", bbs)
-			values = await connection.fetchval("SELECT * FROM threads WHERE id = $1", key)
-			count = await connection.fetchval("SELECT count FROM threads WHERE id = $1", key)
-			count += 1
-			data = values.get(data,{})
-			data["data"].append({
-				"name": name,
-				"mail": mail,
-				"date": int(date.timestamp()),
-				"content": content,
-				"id": id
-			})
-			data_json = json.dumps(data["data"])
+			if lastName == "":
+				lastName = await connection.fetchval("SELECT anonymous_name FROM bbs WHERE id = $1", bbs)
+			row = await connection.fetchrow("SELECT data, count FROM threads WHERE id = $1 AND bbs_id = $2", key, bbs)
+			data, count = row[0], row[1]
+			data = json.loads(data)
+			if count >= 1000:
+				return await render_template("kakikomi_Error.html", message="このスレッドにはもう書けません。")
+			elif count == 999:
+				count += 1
+				data["data"].append({
+					"name": lastName,
+					"mail": mail,
+					"date": date.timestamp(),
+					"content": content,
+					"id": id
+				})
+				data["data"].append({
+					"name": "Over 1000 Thread",
+					"mail": "",
+					"date": date.timestamp(),
+					"content": "レス数が1000を超えたため、このスレッドにはもう書けません...",
+					"id": "System"
+				})
+			else:
+				count += 1
+				data["data"].append({
+					"name": lastName,
+					"mail": mail,
+					"date": date.timestamp(),
+					"content": content,
+					"id": id
+				})
+			data_json = json.dumps(data)
 			# パラメータを指定してクエリを実行
 			await connection.execute(
-				"UPDATE threads SET data = $2, count = $3 WHERE id = $1",
+				"UPDATE threads SET data = $3, count = $4 WHERE id = $1 AND bbs_id = $2",
 				key,
+				bbs,
 				data_json,
 				count
 			)
-		return await render_template("kakikomi_ok.html", bbs_id=bbs, key=int(date.timestamp()))
+		return await render_template("kakikomi_ok.html", bbs_id=bbs, key=int(date.timestamp())if key is None else key)
 
-
+@app.route("/test/read.cgi/<string:bbs>/<int:key>/")
+async def threadPage(bbs: str, key: int):
+	async with app.db_pool.acquire() as connection:
+		values = await connection.fetchrow("SELECT * FROM threads WHERE id = $1 AND bbs_id = $2", key, bbs)
+		if values is None:
+			return "Thread not found", 404  # スレッドが見つからない場合は404エラーを返すなどの処理を行う
+		res_data = json.loads(values["data"])
+		for i, v in enumerate(res_data.get("data", [])):
+			res_data["data"][i]["date"] = datetime.fromtimestamp(v["date"]).strftime("%Y/%m/%d(%a) %H:%M:%S.%f")
+			res_data["data"][i]["content"] = res_data["data"][i]["content"].replace("\n"," <br> ")
+		return await render_template("thread_view.html", data=values, res_data=res_data.get("data", []), bbs_id=bbs, key=key, anonymous_name=await connection.fetchval("SELECT anonymous_name FROM bbs WHERE id = $1", bbs))
 
 @app.errorhandler(404)
 def page_not_found(error):

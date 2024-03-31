@@ -3,30 +3,31 @@
 	<head>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1">
-		<title>{{ bbs_name }} - Mint</title>
+		<title>{{ data.title }} - Mint</title>
 		<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
 		<link href="/css/style.css" rel="stylesheet">
 	</head>
-	<body>
-		<div class="ue">
-			<h1>{{ bbs_name }}</h1>
-			<p>{{ description }}</p>
+	<body style="background-color: #EFEFEF;">
+		<div class="top">
+			<hr>
+			<h1>{{ data.title }}</h1>
 		</div>
-
-		<div class="threads">
-			{% for thread in threads %}
-				<span><a href="/test/read.cgi/{{ bbs_name }}/{{ thread.id }}/">{{ thread.title }}({{ thread.count }})</a></span> <br />
+	
+		<div class="res">
+			{% for _ in res_data %}
+				<dt>{{ loop.index }} ：<font color="green"><b>{{ _.name }}</b></font>：{{ _.date }} ID:{{ _.id }}</dt>
+				<dd style="overflow-wrap: break-word;"> {{ _.content }} <br><br></dd>
 			{% endfor %}
 		</div>
 
+		<hr>
 		<div class="kakikomi">
 			<form method="post" action="/test/bbs.cgi">
-				<b>スレッドを作成</b> <input type="submit" value="スレッドを作成！" /> <br>
-				<label>タイトル: <input type="text" name="subject" placeholder="スレッドのタイトル" /></label> <br>
-				<label>名前: <input type="text" name="FROM" placeholder="{{ anonymous_name }}" /></label>
+				<input type="submit" value="書き込み"> <label>名前: <input type="text" name="FROM" placeholder="{{ anonymous_name }}" /></label>
 				<label>メール: <input type="mail" name="mail" placeholder="省略可" /></label> <br/>
 				<label>内容: <br><textarea name="MESSAGE" cols="60" rows="5"></textarea></label>
 				<input type="hidden" name="bbs" value="{{ bbs_id }}">
+				<input type="hidden" name="key" value="{{ key }}">
 			</form>
 		</div>
 

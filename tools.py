@@ -4,6 +4,8 @@ import base64
 import re
 from datetime import datetime
 import os
+import random
+import string
 
 # .envがあった場合、優先的にロード
 if os.path.isfile(".env"):
@@ -22,9 +24,7 @@ class BBSTools():
 			name2 = result.group(1).replace("◆","◇").replace("★","☆")
 
 			trip_key = result.group(2)
-			tripkey = trip_key[1:].encode('shift_jis')
-			# treat as Shift-JIS bytes
-			tripkey = bytes(tripkey, encoding='shift-jis')
+			tripkey = trip_key.encode('shift_jis')
 			salt = (tripkey + b'H.')[1:3]
 			salt = re.sub(rb'[^\.-z]', b'.', salt)
 			salt = salt.translate(bytes.maketrans(b':;<=>?@[\\]^_`', b'ABCDEFGabcdef'))
@@ -48,3 +48,12 @@ class BBSTools():
 		# 先頭の8文字を抜き取る
 		id = id_base64[:8]
 		return id
+
+	def generateThreadID(length: int = 10):
+		# 生成する文字列に含める文字の範囲を指定
+		letters_and_digits = string.ascii_letters + string.digits
+		
+		# 指定した長さのランダムな文字列を生成
+		random_string = ''.join(random.choice(letters_and_digits) for _ in range(length))
+		
+		return random_string
