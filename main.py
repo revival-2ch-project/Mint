@@ -70,6 +70,14 @@ async def write():
 	mail = form.get("mail", "")
 	content = form.get("MESSAGE", "")
 
+	headers = await request.headers
+	forwarded_for = headers.get('X-Forwarded-For')
+	
+	if forwarded_for:
+		ipaddr = forwarded_for.split(',')[0]  # 複数のIPアドレスがカンマ区切りで送信される場合があるため、最初のものを取得
+	else:
+		ipaddr = request.remote_addr
+
 	# 板が指定されていない場合 または キーがない場合 かつ タイトルがない場合 または 本文がない場合
 	if (bbs == "") or (key == 0 and subject == "") or (content == ""):
 		return await render_template("kakikomi_Error.html", message="フォーム情報を正しく読み込めません！")
@@ -92,7 +100,7 @@ async def write():
 	name = html.escape(name)
 	lastName = BBSTools.getTripbyName(name)
 	date = datetime.now()
-	id = BBSTools.generateIDbyHostandTimestamp(request.remote_addr, date)
+	id = BBSTools.generateIDbyHostandTimestamp(ipaddr, date)
 	content = html.escape(content)
 	mail = html.escape(content)
 
@@ -107,7 +115,8 @@ async def write():
 				"mail": mail,
 				"date": date.timestamp(),
 				"content": content,
-				"id": id
+				"id": id,
+				"ipaddr": ipaddr
 			}]}
 			data_json = json.dumps(data)
 			# パラメータを指定してクエリを実行
@@ -138,7 +147,8 @@ async def write():
 					"mail": mail,
 					"date": date.timestamp(),
 					"content": content,
-					"id": id
+					"id": id,
+					"ipaddr": ipaddr
 				})
 				data["data"].append({
 					"name": "Over 1000 Thread",
@@ -154,7 +164,8 @@ async def write():
 					"mail": mail,
 					"date": date.timestamp(),
 					"content": content,
-					"id": id
+					"id": id,
+					"ipaddr": ipaddr
 				})
 			data_json = json.dumps(data)
 			# パラメータを指定してクエリを実行
