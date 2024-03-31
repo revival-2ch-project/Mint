@@ -192,7 +192,7 @@ async def subjecttxt(bbs: str):
 		raw_threads = await connection.fetch("SELECT * FROM threads WHERE bbs_id = $1", bbs)
 	ss = []
 	for thread in raw_threads:
-		ss.append(f"{thread["id"]}<>{thread["title"]} ({thread["count"]})")
+		ss.append(f'{thread["id"]}<>{thread["title"]} ({thread["count"]})')
 	return "\n".join
 
 @app.route("/<string:bbs>/SETTING.TXT")
