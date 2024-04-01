@@ -3,7 +3,7 @@ Mintのメインソースコード
 """
 
 # まずライブラリのインポート(Quart, asyncpg, os)
-from quart import Quart, render_template, send_from_directory, request, Response
+from quart import Quart, render_template, send_from_directory, request, Response, make_response
 import asyncpg
 import os
 from tools import BBSTools
@@ -44,18 +44,15 @@ async def create_db_pool():
 async def create_db_pool():
 	await app.db_pool.close()
 
-@app.after_request
 async def sjis(response):
-	content_type = response.headers.get('Content-Type', '')
-	if 'text/plain' in content_type and 'charset=utf-8' in content_type:
-		# response.dataを取得するためにawaitを使用しない
-		data = response.get_data()
-		# 新しいContent-Typeヘッダーを追加
-		response.headers.add('Content-Type', 'text/plain; charset=shift_jis')
-		# データをUTF-8からShift-JISに変換し、エラーが発生した場合は無視する
-		encoded_data = data.decode('utf8', errors='ignore').encode('shift_jis', errors='ignore')
-		# レスポンスのデータを変更
-		response.set_data(encoded_data)
+	# response.dataを取得するためにawaitを使用しない
+	data = response.get_data()
+	# 新しいContent-Typeヘッダーを追加
+	response.headers.add('Content-Type', 'text/plain; charset=shift_jis')
+	# データをUTF-8からShift-JISに変換し、エラーが発生した場合は無視する
+	encoded_data = data.decode('utf8', errors='ignore').encode('shift_jis', errors='ignore')
+	# レスポンスのデータを変更
+	response.set_data(encoded_data)
 	return response
 
 # Quartのページ類
@@ -245,7 +242,9 @@ async def subjecttxt(bbs: str):
 	for thread in raw_threads:
 		ss.append(f'{thread["id"]}.dat<>{thread["title"]} ({thread["count"]})')
 	content = "\n".join(ss)
-	response = Response(content, content_type="text/plain")
+	response = make_response(content)
+	response = await sjis(response)  # sjis関数を呼び出す
+
 	return response
 
 @app.route("/<string:bbs>/SETTING.TXT")
@@ -260,7 +259,9 @@ async def threadSettingTxt(bbs: str):
 		s.append('BBS_MAIL_COUNT=64')
 		s.append('BBS_MESSAGE_COUNT=2048')
 		content = "\n".join(s)
-		response = Response(content, content_type="text/plain")
+		response = make_response(content)
+		response = await sjis(response)  # sjis関数を呼び出す
+
 		return response
 
 @app.route("/<string:bbs>/dat/<int:key>.dat")
@@ -269,6 +270,7 @@ async def threadDat(bbs: str, key: int):
 		values = await connection.fetchrow("SELECT * FROM threads WHERE id = $1 AND bbs_id = $2", key, bbs)
 		if values is None:
 			return "Thread not found", 404  # スレッドが見つからない場合は404エラーを返すなどの処理を行う
+		
 		res_data = json.loads(values["data"])
 		ress = []
 		for i, v in enumerate(res_data.get("data", [])):
@@ -279,7 +281,12 @@ async def threadDat(bbs: str, key: int):
 				ress.append(f'{res_data["data"][i]["name"]}<>{res_data["data"][i]["mail"]}<>{res_data["data"][i]["date"]} ID: {res_data["data"][i]["id"]}<>{res_data["data"][i]["content"]}<>{values["title"]}')
 			else:
 				ress.append(f'{res_data["data"][i]["name"]}<>{res_data["data"][i]["mail"]}<>{res_data["data"][i]["date"]} ID: {res_data["data"][i]["id"]}<>{res_data["data"][i]["content"]}<>')
-		return "\n".join(ress)
+
+		response_text = "\n".join(ress)
+		response = make_response(response_text)
+		response = await sjis(response)  # sjis関数を呼び出す
+
+		return response
 
 @app.route("/test/read.cgi/<string:bbs>/<int:key>/")
 async def threadPage(bbs: str, key: int):
