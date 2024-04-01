@@ -1,3 +1,5 @@
+import datetime
+
 settings = {
 	"name": "Mint",
 	"KakikomiKiseiIPs": [
@@ -5,5 +7,6 @@ settings = {
 	],
 	"KakikomiKiseiWords": [
 		"https://discord.gg/jG3juaVqE4",
-	]
+	],
+	"timezone":  datetime.timedelta(hours=9)
 }

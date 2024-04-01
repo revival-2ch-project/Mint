@@ -17,7 +17,7 @@ import random
 import codecs
 import chardet
 
-rentoukisei = defaultdict(lambda: int(datetime.now().timestamp()) - 10)
+rentoukisei = defaultdict(lambda: int((datetime.now() + settings.get("timezone", datetime.timedelta(hours=0))).timestamp()) - 10)
 
 # .envがあった場合、優先的にロード
 if os.path.isfile(".env"):
@@ -28,7 +28,7 @@ if os.path.isfile(".env"):
 DATABASE_URL = os.getenv("database")
 
 class CustomResponse(Response):
-	def __init__(self, *args, **kwargs):
+	async def __init__(self, *args, **kwargs):
 		# 親クラス(Response)の__init__メソッドを呼び出してレスポンスを初期化
 		super().__init__(*args, **kwargs)
 		
@@ -148,7 +148,7 @@ async def write():
 	# トリップ / 日時 / ID / エンコード済み本文
 	name = html.escape(name)
 	lastName = BBSTools.getTripbyName(name)
-	date = datetime.now()
+	date = datetime.now() + settings.get("timezone", datetime.timedelta(hours=9))
 	id = BBSTools.generateIDbyHostandTimestamp(ipaddr, date)
 	content = html.escape(content)
 	mail = html.escape(content)
