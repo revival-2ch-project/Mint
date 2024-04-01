@@ -75,7 +75,7 @@ async def bbsPage(bbs: str):
 		bbs_name = await connection.fetchval("SELECT bbs_name FROM bbs WHERE id = $1", bbs)
 		anonymous_name = await connection.fetchval("SELECT anonymous_name FROM bbs WHERE id = $1", bbs)
 		description = await connection.fetchval("SELECT description FROM bbs WHERE id = $1", bbs)
-		raw_threads = await connection.fetch("SELECT * FROM threads WHERE bbs_id = $1", bbs)
+		raw_threads = await connection.fetch("SELECT * FROM threads WHERE bbs_id = $1 ORDER BY last_write_time DESC", bbs)
 	return await render_template("bbsPage.html",
 							  bbs_name=bbs_name,
 							  description=description,
@@ -176,14 +176,15 @@ async def write():
 				data_json = json.dumps(data)
 				# パラメータを指定してクエリを実行
 				await connection.execute(
-					"INSERT INTO threads (thread_id, id, bbs_id, created_at, title, data, count) VALUES ($1, $2, $3, $4, $5, $6, $7)",
+					"INSERT INTO threads (thread_id, id, bbs_id, created_at, title, data, count, last_write_time) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)",
 					BBSTools.generateThreadID(10),
 					int(date.timestamp()),
 					bbs,
 					date.now(),
 					subject,
 					data_json,
-					1
+					1,
+					int(date.timestamp())
 				)
 			return await render_template("kakikomi_ok.html", bbs_id=bbs, key=int(date.timestamp()))
 		else:
@@ -225,11 +226,12 @@ async def write():
 				data_json = json.dumps(data)
 				# パラメータを指定してクエリを実行
 				await connection.execute(
-					"UPDATE threads SET data = $3, count = $4 WHERE id = $1 AND bbs_id = $2",
+					"UPDATE threads SET data = $3, count = $4, last_write_time = $5 WHERE id = $1 AND bbs_id = $2",
 					key,
 					bbs,
 					data_json,
-					count
+					count,
+					int(date.timestamp())
 				)
 			return await render_template("kakikomi_ok.html", bbs_id=bbs, key=int(date.timestamp())if key is None else key)
 	else:
