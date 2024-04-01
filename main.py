@@ -293,7 +293,7 @@ async def threadPage(bbs: str, key: int):
 			res_data=res_data.get("data", []),
 			bbs_id=bbs,
 			key=key,
-			anonymous_name=await connection.fetchval("SELECT anonymous_name FROM bbs WHERE id = $1", bbs)
+			anonymous_name=await connection.fetchval("SELECT anonymous_name FROM bbs WHERE id = $1", bbs),
 			ver=mintverinfo
 		)
 
