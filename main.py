@@ -7,12 +7,15 @@ from quart import Quart, render_template, send_from_directory, request, Response
 import asyncpg
 import os
 from tools import BBSTools
+from setting import settings
 from datetime import datetime
 import json
 import locale
 import html
 from collections import defaultdict
 import random
+import codecs
+import chardet
 
 rentoukisei = defaultdict(lambda: int(datetime.now().timestamp()) - 10)
 
@@ -24,8 +27,27 @@ if os.path.isfile(".env"):
 # 環境変数の定義
 DATABASE_URL = os.getenv("database")
 
+class CustomResponse(Response):
+	def __init__(self, *args, **kwargs):
+		# 親クラス(Response)の__init__メソッドを呼び出してレスポンスを初期化
+		super().__init__(*args, **kwargs)
+		
+		# レスポンスのデータをUTF-8から指定したエンコーディングに変換する
+		if self.data and isinstance(self.data, str):
+			# 文字コードを自動検出する
+			detected_encoding = chardet.detect(self.data.encode())
+			if detected_encoding['encoding'] == 'shift_jis':
+				# Shift-JISであればUTF-8に変換する
+				self.data = codecs.decode(self.data.encode('shift-jis'), 'utf-8')
+			else:
+				# それ以外の場合はそのまま返す
+				self.data = self.data
+
+class MintApp(Quart):
+	response_class = CustomResponse
+
 # 次にQuartの初期化
-app = Quart(__name__)
+app = MintApp(__name__)
 
 if os.getenv("debug") == "TRUE":
 	app.config['TEMPLATES_AUTO_RELOAD'] = True
@@ -63,6 +85,16 @@ async def bbsPage(bbs: str):
 							  bbs_id = bbs
 				 )
 
+def convert_to_utf8(data):
+	# 文字コードを自動検出する
+	detected_encoding = chardet.detect(data.encode())
+	if detected_encoding['encoding'] == 'shift_jis':
+		# Shift-JISであればUTF-8に変換する
+		return codecs.decode(data.encode('shift-jis'), 'utf-8')
+	else:
+		# それ以外の場合はそのまま返す
+		return data
+
 @app.route("/test/bbs.cgi", methods=["POST"])
 async def write():
 	form = await request.form
@@ -74,6 +106,13 @@ async def write():
 	mail = form.get("mail", "")
 	content = form.get("MESSAGE", "")
 
+	bbs = convert_to_utf8(bbs)
+	subject = convert_to_utf8(subject)
+	name = convert_to_utf8(name)
+	mail = convert_to_utf8(mail)
+	content = convert_to_utf8(content)
+	subject = convert_to_utf8(subject)
+
 	headers = request.headers
 	forwarded_for = headers.get('X-Forwarded-For')
 	
@@ -81,6 +120,9 @@ async def write():
 		ipaddr = forwarded_for.split(',')[0]  # 複数のIPアドレスがカンマ区切りで送信される場合があるため、最初のものを取得
 	else:
 		ipaddr = request.remote_addr
+
+	if ipaddr in settings.get("KakikomiKiseiIPs", []):
+		return await render_template("kakikomi_Error.html", message=f"現在このIPアドレス[{ipaddr}]は書き込み規制中です。またの機会にどうぞ。")
 
 	# 板が指定されていない場合 または キーがない場合 かつ タイトルがない場合 または 本文がない場合
 	if (bbs == "") or (key == 0 and subject == "") or (content == ""):
@@ -99,6 +141,9 @@ async def write():
 		return await render_template("kakikomi_Error.html", message="メール欄の文字数が長すぎます！")
 	if len(content) > 512:
 		return await render_template("kakikomi_Error.html", message="本文の文字数が長すぎます！")
+	
+	if content.count("\n") > 15:
+		return await render_template("kakikomi_Error.html", message="改行が多すぎます！")
 
 	# トリップ / 日時 / ID / エンコード済み本文
 	name = html.escape(name)
@@ -195,7 +240,7 @@ async def subjecttxt(bbs: str):
 	for thread in raw_threads:
 		ss.append(f'{thread["id"]}.dat<>{thread["title"]} ({thread["count"]})')
 	content = "\n".join(ss)
-	response = Response(content, content_type="text/plain")
+	response = CustomResponse(content, content_type="text/plain")
 	return response
 
 @app.route("/<string:bbs>/SETTING.TXT")
@@ -210,7 +255,7 @@ async def threadSettingTxt(bbs: str):
 		s.append('BBS_MAIL_COUNT=64')
 		s.append('BBS_MESSAGE_COUNT=2048')
 		content = "\n".join(s)
-		response = Response(content, content_type="text/plain")
+		response = CustomResponse(content, content_type="text/plain")
 		return response
 
 @app.route("/<string:bbs>/dat/<int:key>.dat")
@@ -247,7 +292,3 @@ async def threadPage(bbs: str, key: int):
 @app.errorhandler(404)
 def page_not_found(error):
 	return "404 Not Found", 404
-
-# 実行
-if __name__ == "__main__":
-	app.run(host="0.0.0.0", port=10000)
