@@ -16,6 +16,7 @@ from collections import defaultdict
 import random
 import codecs
 import chardet
+import sys
 
 rentoukisei = defaultdict(lambda: int((datetime.now() + settings.get("timezone", datetime.timedelta(hours=0))).timestamp()) - 10)
 
@@ -27,30 +28,8 @@ if os.path.isfile(".env"):
 # 環境変数の定義
 DATABASE_URL = os.getenv("database")
 
-class CustomResponse(Response):
-	async def __init__(self, *args, **kwargs):
-		# 親クラス(Response)の__init__メソッドを呼び出してレスポンスを初期化
-		super().__init__(*args, **kwargs)
-		
-		# レスポンスのデータをUTF-8から指定したエンコーディングに変換する
-		if self.data and isinstance(self.data, str):
-			# データの読み込みが完了するまで待機する
-			await self.data.read()
-
-			# 文字コードを自動検出する
-			detected_encoding = chardet.detect(self.data.encode())
-			if detected_encoding['encoding'] == 'shift_jis':
-				# Shift-JISであればUTF-8に変換する
-				self.data = codecs.decode(self.data.encode('shift-jis'), 'utf-8')
-			else:
-				# それ以外の場合はそのまま返す
-				self.data = self.data
-
-class MintApp(Quart):
-	response_class = CustomResponse
-
 # 次にQuartの初期化
-app = MintApp(__name__)
+app = Quart(__name__)
 
 if os.getenv("debug") == "TRUE":
 	app.config['TEMPLATES_AUTO_RELOAD'] = True
@@ -63,6 +42,13 @@ async def create_db_pool():
 @app.after_serving
 async def create_db_pool():
 	await app.db_pool.close()
+
+@app.after_request
+async def sjis(response):
+	if response.charset == 'utf-8':
+		response.headers.add('Content-Type', 'text/html; charset=shift_jis')
+		response.data = response.data.decode('utf8').encode('sjis')
+	return response
 
 # Quartのページ類
 @app.route("/")
