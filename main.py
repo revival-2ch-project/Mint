@@ -8,7 +8,7 @@ import asyncpg
 import os
 from tools import BBSTools
 from setting import settings, mintverinfo
-from datetime import datetime
+from datetime import datetime, timedelta
 import json
 import locale
 import html
@@ -18,7 +18,7 @@ import codecs
 import chardet
 import sys
 
-rentoukisei = defaultdict(lambda: int((datetime.now() + settings.get("timezone", datetime.timedelta(hours=0))).timestamp()) - 10)
+rentoukisei = defaultdict(lambda: int((datetime.now() + settings.get("timezone", timedelta(hours=0))).timestamp()) - 10)
 
 # .envがあった場合、優先的にロード
 if os.path.isfile(".env"):
@@ -65,7 +65,9 @@ async def hello():
 
 @app.route('/css/<path:filename>')
 async def css(filename):
-	return await send_from_directory('./static/css/', filename)
+	response = await send_from_directory('./static/css/', filename)
+	response.content_type = "text/css"
+	return response
 
 @app.route("/<string:bbs>/")
 async def bbsPage(bbs: str):
@@ -145,7 +147,7 @@ async def write():
 	# トリップ / 日時 / ID / エンコード済み本文
 	name = html.escape(name)
 	lastName = BBSTools.getTripbyName(name)
-	date = datetime.now() + settings.get("timezone", datetime.timedelta(hours=9))
+	date = datetime.now() + settings.get("timezone", timedelta(hours=9))
 	id = BBSTools.generateIDbyHostandTimestamp(ipaddr, date)
 	content = html.escape(content)
 	mail = html.escape(content)
