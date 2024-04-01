@@ -31,7 +31,7 @@ DATABASE_URL = os.getenv("database")
 # 次にQuartの初期化
 app = Quart(__name__)
 
-app.jinja_env.filters['encode_sjis'] = lambda u: codecs.encode(u, 'shift_jis')
+app.jinja_env.filters['encode_sjis'] = lambda u: codecs.encode(str(u), 'shift_jis')
 
 if os.getenv("debug") == "TRUE":
 	app.debug = True
