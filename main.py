@@ -275,7 +275,7 @@ async def threadDat(bbs: str, key: int):
 		ress = []
 		for i, v in enumerate(res_data.get("data", [])):
 			res_data["data"][i]["date"] = datetime.fromtimestamp(v["date"]).strftime("%Y/%m/%d(%a) %H:%M:%S.%f")
-			res_data["data"][i]["content"] = res_data["data"][i]["content"].replace("\r\n"," <br> ").replace("\n"," <br> ")
+			res_data["data"][i]["content"] = res_data["data"][i]["content"].replace("\r\n"," <br> ").replace("\n"," <br> ").replace("\r"," <br> ")
 			res_data["data"][i]["content"] = BBSTools.convert_to_link(res_data["data"][i]["content"])
 			if i == 0:
 				ress.append(f'{res_data["data"][i]["name"]}<>{res_data["data"][i]["mail"]}<>{res_data["data"][i]["date"]} ID: {res_data["data"][i]["id"]}<>{res_data["data"][i]["content"]}<>{values["title"]}')
@@ -297,7 +297,7 @@ async def threadPage(bbs: str, key: int):
 		res_data = json.loads(values["data"])
 		for i, v in enumerate(res_data.get("data", [])):
 			res_data["data"][i]["date"] = datetime.fromtimestamp(v["date"]).strftime("%Y/%m/%d(%a) %H:%M:%S.%f")
-			res_data["data"][i]["content"] = res_data["data"][i]["content"].replace("\r\n"," <br> ").replace("\n"," <br> ")
+			res_data["data"][i]["content"] = res_data["data"][i]["content"].replace("\r\n"," <br> ").replace("\n"," <br> ").replace("\r"," <br> ")
 			res_data["data"][i]["content"] = BBSTools.convert_to_link(res_data["data"][i]["content"])
 		return await render_template(
 			"thread_view.html",
