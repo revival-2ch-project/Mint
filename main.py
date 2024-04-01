@@ -45,10 +45,16 @@ async def create_db_pool():
 	await app.db_pool.close()
 
 @app.after_request
-async def sjis(response):
+async def sjis(response: Response):
 	if 'charset=utf-8' in response.headers.get('Content-Type', ''):
+		# response.dataを取得するためにawaitを使用
+		data = await response.get_data()
+		# 新しいContent-Typeヘッダーを追加
 		response.headers.add('Content-Type', 'text/html; charset=shift_jis')
-		response.data = response.data.decode('utf8').encode('sjis')
+		# データをUTF-8からShift-JISに変換
+		encoded_data = data.decode('utf8').encode('sjis')
+		# レスポンスのデータを変更
+		response.set_data(encoded_data)
 	return response
 
 # Quartのページ類
