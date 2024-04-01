@@ -47,7 +47,7 @@ async def create_db_pool():
 @app.after_request
 async def sjis(response):
 	content_type = response.headers.get('Content-Type', '')
-	if content_type.startswith('text/plain') and 'charset=utf-8' in content_type:
+	if 'text/plain' in content_type and 'charset=utf-8' in content_type:
 		# response.dataを取得するためにawaitを使用しない
 		data = response.get_data()
 		# 新しいContent-Typeヘッダーを追加

@@ -15,7 +15,7 @@ settings = {
 # Mint Version Info. Please do not rewrite!
 # Mintのバージョン情報です。書き直さないでください！
 mintverinfo = {
-	"ver": "0.0.1",
-	"buildnum": 1,
-	"codename": "lightangel"
+	"ver": "0.0.1β",
+	"buildnum": 3,
+	"codename": "jailbreak"
 }
