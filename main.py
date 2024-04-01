@@ -32,6 +32,7 @@ DATABASE_URL = os.getenv("database")
 app = Quart(__name__)
 
 if os.getenv("debug") == "TRUE":
+	app.debug = True
 	app.config['TEMPLATES_AUTO_RELOAD'] = True
 
 # データベースの準備
@@ -45,7 +46,7 @@ async def create_db_pool():
 
 @app.after_request
 async def sjis(response):
-	if response.charset == 'utf-8':
+	if 'charset=utf-8' in response.headers.get('Content-Type', ''):
 		response.headers.add('Content-Type', 'text/html; charset=shift_jis')
 		response.data = response.data.decode('utf8').encode('sjis')
 	return response
@@ -233,7 +234,7 @@ async def subjecttxt(bbs: str):
 	for thread in raw_threads:
 		ss.append(f'{thread["id"]}.dat<>{thread["title"]} ({thread["count"]})')
 	content = "\n".join(ss)
-	response = CustomResponse(content, content_type="text/plain")
+	response = Response(content, content_type="text/plain")
 	return response
 
 @app.route("/<string:bbs>/SETTING.TXT")
@@ -248,7 +249,7 @@ async def threadSettingTxt(bbs: str):
 		s.append('BBS_MAIL_COUNT=64')
 		s.append('BBS_MESSAGE_COUNT=2048')
 		content = "\n".join(s)
-		response = CustomResponse(content, content_type="text/plain")
+		response = Response(content, content_type="text/plain")
 		return response
 
 @app.route("/<string:bbs>/dat/<int:key>.dat")
