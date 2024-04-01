@@ -17,6 +17,7 @@ import random
 import codecs
 import chardet
 import sys
+from jinja2 import Markup
 
 rentoukisei = defaultdict(lambda: int((datetime.now() + settings.get("timezone", timedelta(hours=0))).timestamp()) - 10)
 
@@ -31,7 +32,7 @@ DATABASE_URL = os.getenv("database")
 # 次にQuartの初期化
 app = Quart(__name__)
 
-app.jinja_env.filters['encode_sjis'] = lambda u: codecs.encode(str(u), 'shift_jis')
+app.jinja_env.filters['encode_sjis'] = lambda u: Markup(codecs.encode(str(u), 'shift_jis'))
 
 if os.getenv("debug") == "TRUE":
 	app.debug = True
