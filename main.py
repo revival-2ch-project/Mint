@@ -86,10 +86,10 @@ async def bbsPage(bbs: str):
 
 def convert_to_utf8(data):
 	# 文字コードを自動検出する
-	detected_encoding = chardet.detect(data.encode())
+	detected_encoding = chardet.detect(data)
 	if detected_encoding['encoding'] == 'shift_jis':
 		# Shift-JISであればUTF-8に変換する
-		return codecs.decode(data.encode('shift-jis'), 'utf-8')
+		return codecs.decode(data, 'shift_jis').encode('utf-8')
 	else:
 		# それ以外の場合はそのまま返す
 		return data
@@ -264,7 +264,10 @@ async def write():
 				)
 			return await render_template("kakikomi_ok.html", bbs_id=bbs, key=int(date.timestamp()) if key is None else key, monazilla=monazilla)
 	else:
-		return await render_template("kakikomi_Error.html", message=f"連投規制中です！あと{(rentoukisei[ipaddr] + 10) - int(date.timestamp())}秒お待ち下さい。")
+		if "Monazilla/1.00" in user_agent:
+			return await render_template("kakikomi_Error_sjis.html", message=f"連投規制中です！あと{(rentoukisei[ipaddr] + 10) - int(date.timestamp())}秒お待ち下さい。")
+		else:
+			return await render_template("kakikomi_Error.html", message=f"連投規制中です！あと{(rentoukisei[ipaddr] + 10) - int(date.timestamp())}秒お待ち下さい。")
 
 @app.route("/<string:bbs>/subject.txt")
 async def subjecttxt(bbs: str):
