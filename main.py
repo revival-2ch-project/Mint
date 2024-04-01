@@ -86,7 +86,7 @@ async def bbsPage(bbs: str):
 
 def convert_to_utf8(data):
 	# 文字コードを自動検出する
-	detected_encoding = chardet.detect(data)
+	detected_encoding = chardet.detect(data.encode())
 	if detected_encoding['encoding'] == 'shift_jis':
 		# Shift-JISであればUTF-8に変換する
 		return codecs.decode(data, 'shift_jis').encode('utf-8')
