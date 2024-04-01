@@ -81,7 +81,8 @@ async def bbsPage(bbs: str):
 							  description=description,
 							  threads=raw_threads,
 							  anonymous_name=anonymous_name,
-							  bbs_id = bbs
+							  bbs_id = bbs,
+							  ver=mintverinfo
 				 )
 
 def convert_to_utf8(data):

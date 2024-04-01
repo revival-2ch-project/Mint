@@ -21,7 +21,7 @@ class BBSTools():
 		result = re.match(pattern, name)
 
 		if result:
-			name2 = result.group(1).replace("◆","◇").replace("★","☆")
+			name2 = result.group(1).replace("◆","◇").replace("★","☆").replace("●","○")
 
 			trip_key = result.group(2)
 			if len(trip_key) <= 10:
@@ -39,7 +39,7 @@ class BBSTools():
 				trip = code.decode('utf8')
 			return f"{name2}</b>◆{trip}<b>"
 		else:
-			return name.replace("◆","◇").replace("★","☆")
+			return name.replace("◆","◇").replace("★","☆").replace("●","○")
 
 	def generateIDbyHostandTimestamp(ip: str, datetime: datetime):
 		# 初期パラメータ
