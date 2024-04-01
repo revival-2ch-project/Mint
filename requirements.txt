@@ -2,3 +2,4 @@ quart
 asyncpg
 passlib
 chardet
+hypercorn

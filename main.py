@@ -153,6 +153,10 @@ async def write():
 	content = html.escape(content)
 	mail = html.escape(content)
 
+	for word in settings.get("KakikomiKiseiWords", []):
+		if word in content:
+			return await render_template("kakikomi_Error.html", message=f"禁止ワードが含まれています！[{word}]")
+
 	# やっと書き込み処理
 	# ...の前に連投規制
 	if int(date.timestamp()) >= rentoukisei[ipaddr] + 10:
