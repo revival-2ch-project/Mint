@@ -45,14 +45,10 @@ async def create_db_pool():
 	await app.db_pool.close()
 
 async def sjis(response):
-	# response.dataを取得するためにawaitを使用しない
-	data = response.get_data()
-	# 新しいContent-Typeヘッダーを追加
-	response.headers.add('Content-Type', 'text/plain; charset=shift_jis')
-	# データをUTF-8からShift-JISに変換し、エラーが発生した場合は無視する
+	data = await response.get_data(raw=False)
 	encoded_data = data.decode('utf8', errors='ignore').encode('shift_jis', errors='ignore')
-	# レスポンスのデータを変更
 	response.set_data(encoded_data)
+	response.headers.add('Content-Type', 'text/plain; charset=shift_jis')
 	return response
 
 # Quartのページ類
