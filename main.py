@@ -34,6 +34,9 @@ class CustomResponse(Response):
 		
 		# レスポンスのデータをUTF-8から指定したエンコーディングに変換する
 		if self.data and isinstance(self.data, str):
+			# データの読み込みが完了するまで待機する
+			await self.data.read()
+
 			# 文字コードを自動検出する
 			detected_encoding = chardet.detect(self.data.encode())
 			if detected_encoding['encoding'] == 'shift_jis':
