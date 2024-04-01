@@ -147,7 +147,7 @@ async def write():
 	date = datetime.now() + settings.get("timezone", timedelta(hours=9))
 	id = BBSTools.generateIDbyHostandTimestamp(ipaddr, date)
 	content = html.escape(content)
-	mail = html.escape(content)
+	mail = html.escape(mail)
 
 	for word in settings.get("KakikomiKiseiWords", []):
 		if word in content:
