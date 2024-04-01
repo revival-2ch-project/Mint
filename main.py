@@ -31,6 +31,8 @@ DATABASE_URL = os.getenv("database")
 # 次にQuartの初期化
 app = Quart(__name__)
 
+app.jinja_env.filters['encode_sjis'] = lambda u: codecs.encode(u, 'shift_jis')
+
 if os.getenv("debug") == "TRUE":
 	app.debug = True
 	app.config['TEMPLATES_AUTO_RELOAD'] = True
@@ -101,7 +103,7 @@ async def write():
 	subject = form.get("subject", "")
 	name = form.get("FROM", "")
 	mail = form.get("mail", "")
-	content = form.get("MESSAGE", "")
+	content = form.get("MESSAGE", "").replace("\r\n", "\n").replace("\r","\n")
 
 	subject = convert_to_utf8(subject)
 	name = convert_to_utf8(name)
@@ -110,6 +112,7 @@ async def write():
 	subject = convert_to_utf8(subject)
 
 	headers = request.headers
+	user_agent = headers.get('User-Agent', '')
 	forwarded_for = headers.get('X-Forwarded-For')
 	
 	if forwarded_for:
@@ -117,29 +120,55 @@ async def write():
 	else:
 		ipaddr = request.remote_addr
 
+	if "Monazilla/1.00" in user_agent:
+		monazilla = ""
+	else:
+		monazilla = "#sita"
+
 	if ipaddr in settings.get("KakikomiKiseiIPs", []):
-		return await render_template("kakikomi_Error.html", message=f"現在このIPアドレス[{ipaddr}]は書き込み規制中です。またの機会にどうぞ。")
+		if "Monazilla/1.00" in user_agent:
+			return await render_template("kakikomi_Error_sjis.html", message=f"現在このIPアドレス[{ipaddr}]は書き込み規制中です。またの機会にどうぞ。")
+		else:
+			return await render_template("kakikomi_Error.html", message=f"現在このIPアドレス[{ipaddr}]は書き込み規制中です。またの機会にどうぞ。")
 
 	# 板が指定されていない場合 または キーがない場合 かつ タイトルがない場合 または 本文がない場合
 	if (bbs == "") or (key == 0 and subject == "") or (content == ""):
-		return await render_template("kakikomi_Error.html", message="フォーム情報を正しく読み込めません！")
+		if "Monazilla/1.00" in user_agent:
+			return await render_template("kakikomi_Error_sjis.html", message="フォーム情報を正しく読み込めません！")
+		else:
+			return await render_template("kakikomi_Error.html", message="フォーム情報を正しく読み込めません！")
 
 	async with app.db_pool.acquire() as connection:
 		#BBSがあるかどうか取得
 		bbs_data = await connection.fetchrow("SELECT * FROM bbs WHERE id = $1", bbs)
 	if bbs_data == None:
-		return await render_template("kakikomi_Error.html", message="板情報を正しく読み込めません！")
+		if "Monazilla/1.00" in user_agent:
+			return await render_template("kakikomi_Error_sjis.html", message="板情報を正しく読み込めません！")
+		else:
+			return await render_template("kakikomi_Error.html", message="板情報を正しく読み込めません！")
 
 	# 規制
 	if len(name) > 64:
-		return await render_template("kakikomi_Error.html", message="名前欄の文字数が長すぎます！")
+		if "Monazilla/1.00" in user_agent:
+			return await render_template("kakikomi_Error_sjis.html", message="名前欄の文字数が長すぎます！")
+		else:
+			return await render_template("kakikomi_Error.html", message="名前欄の文字数が長すぎます！")
 	if len(mail) > 32:
-		return await render_template("kakikomi_Error.html", message="メール欄の文字数が長すぎます！")
+		if "Monazilla/1.00" in user_agent:
+			return await render_template("kakikomi_Error_sjis.html", message="メール欄の文字数が長すぎます！")
+		else:
+			return await render_template("kakikomi_Error.html", message="メール欄の文字数が長すぎます！")
 	if len(content) > 512:
-		return await render_template("kakikomi_Error.html", message="本文の文字数が長すぎます！")
+		if "Monazilla/1.00" in user_agent:
+			return await render_template("kakikomi_Error_sjis.html", message="本文の文字数が長すぎます！")
+		else:
+			return await render_template("kakikomi_Error.html", message="本文の文字数が長すぎます！")
 	
 	if content.count("\n") > 15:
-		return await render_template("kakikomi_Error.html", message="改行が多すぎます！")
+		if "Monazilla/1.00" in user_agent:
+			return await render_template("kakikomi_Error_sjis.html", message="改行が多すぎます！")
+		else:
+			return await render_template("kakikomi_Error.html", message="改行が多すぎます！")
 
 	# トリップ / 日時 / ID / エンコード済み本文
 	name = html.escape(name)
@@ -151,7 +180,10 @@ async def write():
 
 	for word in settings.get("KakikomiKiseiWords", []):
 		if word in content:
-			return await render_template("kakikomi_Error.html", message=f"禁止ワードが含まれています！[{word}]")
+			if "Monazilla/1.00" in user_agent:
+				return await render_template("kakikomi_Error_sjis.html", message=f"禁止ワードが含まれています！[{word}]")
+			else:
+				return await render_template("kakikomi_Error.html", message=f"禁止ワードが含まれています！[{word}]")
 
 	# やっと書き込み処理
 	# ...の前に連投規制
@@ -183,7 +215,7 @@ async def write():
 					1,
 					int(date.timestamp())
 				)
-			return await render_template("kakikomi_ok.html", bbs_id=bbs, key=int(date.timestamp()))
+			return await render_template("kakikomi_ok.html", bbs_id=bbs, key=int(date.timestamp()), monazilla=monazilla)
 		else:
 			async with app.db_pool.acquire() as connection:
 				if lastName == "":
@@ -230,7 +262,7 @@ async def write():
 					count,
 					int(date.timestamp())
 				)
-			return await render_template("kakikomi_ok.html", bbs_id=bbs, key=int(date.timestamp())if key is None else key)
+			return await render_template("kakikomi_ok.html", bbs_id=bbs, key=int(date.timestamp()) if key is None else key, monazilla=monazilla)
 	else:
 		return await render_template("kakikomi_Error.html", message=f"連投規制中です！あと{(rentoukisei[ipaddr] + 10) - int(date.timestamp())}秒お待ち下さい。")
 

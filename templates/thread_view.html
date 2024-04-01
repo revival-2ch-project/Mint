@@ -15,7 +15,11 @@
 	
 		<div class="res">
 			{% for _ in res_data %}
-				<dt>{{ loop.index }} ：<font color="green"><b>{{ _.name | safe }}</b></font>：{{ _.date }} ID:{{ _.id }}</dt>
+				{% if _.mail %}
+					<dt>{{ loop.index }} ：<font color="green"><b><a href="mailto:{{ _.mail }}">{{ _.name | safe }}</a></b></font>：{{ _.date }} ID:{{ _.id }}</dt>
+				{% else %}
+					<dt>{{ loop.index }} ：<font color="green"><b>{{ _.name | safe }}</b></font>：{{ _.date }} ID:{{ _.id }}</dt>
+				{% endif %}
 				<dd style="overflow-wrap: break-word;"> {{ _.content | safe }} <br><br></dd>
 			{% endfor %}
 		</div>
