@@ -7,7 +7,7 @@ from quart import Quart, render_template, send_from_directory, request, Response
 import asyncpg
 import os
 from tools import BBSTools
-from setting import settings
+from setting import settings, mintverinfo
 from datetime import datetime
 import json
 import locale
@@ -48,7 +48,7 @@ async def create_db_pool():
 async def sjis(response: Response):
 	if 'charset=utf-8' in response.headers.get('Content-Type', ''):
 		# response.dataを取得するためにawaitを使用
-		data = await response.get_data()
+		data = response.get_data()
 		# 新しいContent-Typeヘッダーを追加
 		response.headers.add('Content-Type', 'text/html; charset=shift_jis')
 		# データをUTF-8からShift-JISに変換
@@ -287,7 +287,16 @@ async def threadPage(bbs: str, key: int):
 			res_data["data"][i]["date"] = datetime.fromtimestamp(v["date"]).strftime("%Y/%m/%d(%a) %H:%M:%S.%f")
 			res_data["data"][i]["content"] = res_data["data"][i]["content"].replace("\n"," <br> ")
 			res_data["data"][i]["content"] = BBSTools.convert_to_link(res_data["data"][i]["content"])
-		return await render_template("thread_view.html", data=values, res_data=res_data.get("data", []), bbs_id=bbs, key=key, anonymous_name=await connection.fetchval("SELECT anonymous_name FROM bbs WHERE id = $1", bbs))
+		return await render_template(
+			"thread_view.html",
+			data=values,
+			res_data=res_data.get("data", []),
+			bbs_id=bbs,
+			key=key,
+			anonymous_name=await connection.fetchval("SELECT anonymous_name FROM bbs WHERE id = $1", bbs)
+			ver=mintverinfo
+		)
+
 
 @app.errorhandler(404)
 def page_not_found(error):
