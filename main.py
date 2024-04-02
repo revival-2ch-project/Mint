@@ -236,7 +236,7 @@ async def write():
 				"count": count
 			}, room=f"{bbs}_{int(date.timestamp()) if key is None else key}")
 			if "Monazilla/1.00" in user_agent:
-				response = await make_response(await render_template("kakikomi_ok_sjis.html", bbs_id=bbs, key=int(date.timestamp()) if key is None else key, monazilla=monazilla))
+				response = await make_response(await render_template("kakikomi_ok_sjis.html", encoding='cp931', bbs_id=bbs, key=int(date.timestamp()) if key is None else key, monazilla=monazilla))
 			else:
 				response = await make_response(await render_template("kakikomi_ok.html", bbs_id=bbs, key=int(date.timestamp()) if key is None else key, monazilla=monazilla))
 			response.set_cookie("NAME", value=NAME, expires=int(datetime.now().timestamp()) + 60*60*24*365*10)
@@ -298,7 +298,7 @@ async def write():
 				"count": count
 			}, room=f"{bbs}_{int(date.timestamp()) if key is None else key}")
 			if "Monazilla/1.00" in user_agent:
-				response = await make_response(await render_template("kakikomi_ok_sjis.html", bbs_id=bbs, key=int(date.timestamp()) if key is None else key, monazilla=monazilla))
+				response = await make_response(await render_template("kakikomi_ok_sjis.html", encoding='cp931', bbs_id=bbs, key=int(date.timestamp()) if key is None else key, monazilla=monazilla))
 			else:
 				response = await make_response(await render_template("kakikomi_ok.html", bbs_id=bbs, key=int(date.timestamp()) if key is None else key, monazilla=monazilla))
 			response.set_cookie("NAME", value=NAME, expires=int(datetime.now().timestamp()) + 60*60*24*365*10)
