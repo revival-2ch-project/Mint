@@ -42,36 +42,18 @@ class BBSTools():
 			return name.replace("◆","◇").replace("★","☆").replace("●","○")
 
 	def generateID(ip: str, bbs: str, datetime: datetime):
-		# 日にち (03/01/26 22:13 -> 26)
-		day = datetime.day
+		# 初期パラメータ
+		timestamp = datetime.strftime("%Y-%m-%d")
+		secret = os.getenv("ID_GENERATE_SECRET")
 
-		# /dev/randomを開き、先頭から16バイト読み出したランダムな値。
-		# /dev/randomを使わない設定の場合は、ランダムな数字(16桁)。
-		# 日付が変わると更新される。日付が同じなら再利用される。
-		# サーバをクラックしない限り、値は分かりません。
-		# 日付を取得してシード値として使用する
-		today = datetime.strftime("%Y%m%d")
+		# SHA1ハッシュを計算
+		id_hash = hashlib.sha1((timestamp + "_" + ip + "_" + bbs + "_" + secret).encode('utf-8')).hexdigest()
 
-		# 日付に基づいて乱数生成器を初期化
-		random.seed(today)
+		# Base64エンコード
+		id_base64 = base64.b64encode(id_hash.encode('utf-8')).decode('utf-8')
 
-		# 16桁のランダムな数字を生成する
-		rand = ''.join([str(random.randint(0, 9)) for _ in range(16)])
-
-		# IPアドレスからMD5を算出する。(16進数形式)
-		# 返ってきた文字列の"後ろから4バイト"を求める
-		ipmd5 = hashlib.md5(ip.encode()).hexdigest()[-4:]
-
-		# メッセージを作成する
-		md5 = hashlib.md5()
-		md5.update(ipmd5.encode())
-		md5.update(bbs.encode())
-		md5.update(str(day).encode())
-		md5.update(str(rand).encode())
-
-		# メッセージからMD5を算出する。(base64enc形式)
-		# 返ってきた文字列の先頭から8文字がIDになります。
-		id = md5.digest()[:8].decode('latin-1')
+		# 先頭の8文字を抜き取る
+		id = id_base64[:8]
 		return id
 
 	def generateThreadID(length: int = 10):
