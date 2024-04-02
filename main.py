@@ -195,7 +195,7 @@ async def write():
 			return await render_template("kakikomi_Error.html", message=f"現在このIPアドレス[{ipaddr}]は書き込み規制中です。またの機会にどうぞ。")
 
 	# 板が指定されていない場合 または キーがない場合 かつ タイトルがない場合 または 本文がない場合
-	if (bbs == "") or (key == 0 and subject == "") or (content.replace("\n","") == ""):
+	if (bbs == "") or (key == 0 and subject == "") or (content.replace("\n","").replace(" ","").replace("　","") == ""):
 		if if_utf8 is None:
 			return await sjis_error("フォーム情報を正しく読み込めません！")
 		else:
@@ -255,7 +255,7 @@ async def write():
 		if subject != "":
 			subject = html.escape(subject)
 			async with quart_app.db_pool.acquire() as connection:
-				if lastName == "":
+				if lastName.replace(" ","").replace("　","") == "":
 					lastName = await connection.fetchval("SELECT anonymous_name FROM bbs WHERE id = $1", bbs)
 				data = {"data": [{
 					"name": lastName,
@@ -296,7 +296,7 @@ async def write():
 			return response
 		else:
 			async with quart_app.db_pool.acquire() as connection:
-				if lastName == "":
+				if lastName.replace(" ","").replace("　","") == "":
 					lastName = await connection.fetchval("SELECT anonymous_name FROM bbs WHERE id = $1", bbs)
 				row = await connection.fetchrow("SELECT data, count FROM threads WHERE id = $1 AND bbs_id = $2", key, bbs)
 				data, count = row[0], row[1]
