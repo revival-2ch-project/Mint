@@ -111,15 +111,16 @@ async def write():
 	mail = form.get("mail", "")
 	content = form.get("MESSAGE", "").replace("\r\n", "\n").replace("\r","\n")
 
-	subject = convert_to_utf8(subject)
-	name = convert_to_utf8(name)
-	mail = convert_to_utf8(mail)
-	content = convert_to_utf8(content)
-	subject = convert_to_utf8(subject)
-
 	headers = request.headers
 	user_agent = headers.get('User-Agent', '')
 	forwarded_for = headers.get('X-Forwarded-For')
+
+	if "Monazilla/1.00" in user_agent:
+		subject = convert_to_utf8(subject)
+		name = convert_to_utf8(name)
+		mail = convert_to_utf8(mail)
+		content = convert_to_utf8(content)
+		subject = convert_to_utf8(subject)
 	
 	if forwarded_for:
 		ipaddr = forwarded_for.split(',')[0]  # 複数のIPアドレスがカンマ区切りで送信される場合があるため、最初のものを取得
@@ -203,7 +204,7 @@ async def write():
 				data = {"data": [{
 					"name": lastName,
 					"mail": mail,
-					"date": date.timestamp(),
+					"date": date,
 					"content": content,
 					"id": id,
 					"ipaddr": ipaddr
@@ -226,7 +227,7 @@ async def write():
 				'name': lastName,
 				'mail': mail,
 				'content': content,
-				'date': date.timestamp(),
+				'date': date.strftime("%Y/%m/%d(%a) %H:%M:%S.%f"),
 				"id": id,
 				"count": count
 			}, room=f"{bbs}_{int(date.timestamp()) if key is None else key}")
@@ -285,7 +286,7 @@ async def write():
 				'name': lastName,
 				'mail': mail,
 				'content': content,
-				'date': date.timestamp(),
+				'date': date.strftime("%Y/%m/%d(%a) %H:%M:%S.%f"),
 				"id": id,
 				"count": count
 			}, room=f"{bbs}_{int(date.timestamp()) if key is None else key}")

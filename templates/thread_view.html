@@ -64,14 +64,12 @@
 
 			socket.on('thread_writed', (data) => {
 				console.log('Received thread_writed:', data);
-				const date = new Date(data["date"]);
-				const formattedDate = date.toLocaleString("ja-JP", { year: 'numeric', month: 'numeric', day: 'numeric', weekday: 'short', hour: 'numeric', minute: 'numeric', second: 'numeric', fractionalSecondDigits: 3 });
 				if (data["mail"] != "") {
 					let content = '<dt>'+data["count"]+' ：<font color="green"><b><a href="mailto:'+data["mail"]+'">'+data["name"]+'</a></b></font>：'+formattedDate+' ID:'+data["id"]+'</dt>';
 					content += '<dd style="overflow-wrap: break-word;"> '+data["content"]+' <br><br></dd>';
 					document.getElementById("ress").innerHTML += content;
 				}else{
-					let content = '<dt>'+data["count"]+' ：<font color="green"><b>'+data["name"]+'</b></font>：'+formattedDate+' ID:'+data["id"]+'</dt>';
+					let content = '<dt>'+data["count"]+' ：<font color="green"><b>'+data["name"]+'</b></font>：'+data["date"]+' ID:'+data["id"]+'</dt>';
 					content += '<dd style="overflow-wrap: break-word;"> '+data["content"]+' <br><br></dd>';
 					document.getElementById("ress").innerHTML += content;
 				}
