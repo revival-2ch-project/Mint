@@ -17,6 +17,7 @@ import chardet
 import socketio
 from collections import defaultdict
 import feedgen.feed
+import urllib.parse
 
 rentoukisei = defaultdict(lambda: int((datetime.now() + settings.get("timezone", timedelta(hours=0))).timestamp()) - 10)
 
@@ -101,27 +102,78 @@ def convert_to_utf8(data):
 		# それ以外の場合はそのまま返す
 		return data
 
+async def sjis_error(message: str):
+	error = f"""
+		<!doctype html>
+		<html lang="ja">
+			<head>
+				<meta charset="shift-jis">
+				<meta name="viewport" content="width=device-width, initial-scale=1">
+				<title>Error - Mint</title>
+				<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
+				<link href="/css/style.css" rel="stylesheet">
+			</head>
+			<body>
+				<!-- 2ch_X:error -->
+				<font size="+1" color="#FF0000"><b>ERROR: {message}</b></font>
+			
+				<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz" crossorigin="anonymous"></script>
+			</body>
+		</html>
+	"""
+	response = make_response(error)
+	response = await sjis(response)  # sjis関数を呼び出す
+	return response
+
+async def sjis_ok(bbs, key):
+	res = f"""
+			<!doctype html>
+			<html lang="ja">
+				<head>
+					<meta charset="shift-jis">
+					<meta name="viewport" content="width=device-width, initial-scale=1">
+					<title>書きこみました。</title>
+					<meta http-equiv="refresh" content="5;URL=/test/read.cgi/{bbs}/{key}/">
+					<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
+					<link href="/css/style.css" rel="stylesheet">
+				</head>
+				<body>
+					<!-- 2ch_X:true -->
+					書き込みが完了しました。<br>
+					1秒後に自動で転移します。
+				
+					<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz" crossorigin="anonymous"></script>
+				</body>
+			</html>
+	"""
+	response = make_response(res)
+	response = await sjis(response)  # sjis関数を呼び出す
+	return response
+
 @quart_app.route("/test/bbs.cgi", methods=["POST"])
 async def write():
 	form = await request.form
-	bbs = form.get("bbs", "")
-	key = form.get("key", 0, type=int)
-	time = form.get("time", 0)	# 使用する予定なし
-	subject = form.get("subject", "")
-	name = form.get("FROM", "")
-	mail = form.get("mail", "")
-	content = form.get("MESSAGE", "").replace("\r\n", "\n").replace("\r","\n")
+	if_utf8 = form.get("if_utf8", None, type=bool)
+	data = await request.get_data()
+	decoded_data = urllib.parse.unquote(data.decode(), "utf-8" if if_utf8 is not None else "cp932")
+	
+	# URLエンコードされたデータを辞書に変換
+	post_data_dict = {}
+	for pair in decoded_data.split('&'):
+		key, value = pair.split('=')
+		post_data_dict[key] = value
+
+	bbs = post_data_dict.get("bbs", "")
+	key = int(post_data_dict.get("key", 0))
+	time = int(post_data_dict.get("time", 0))	# 使用する予定なし
+	subject = post_data_dict.get("subject", "")
+	name = post_data_dict.get("FROM", "")
+	mail = post_data_dict.get("mail", "")
+	content = post_data_dict.get("MESSAGE", "").replace("\r\n", "\n").replace("\r","\n")
 
 	headers = request.headers
 	user_agent = headers.get('User-Agent', '')
 	forwarded_for = headers.get('X-Forwarded-For')
-
-	if "Monazilla/1.00" in user_agent:
-		subject = convert_to_utf8(subject)
-		name = convert_to_utf8(name)
-		mail = convert_to_utf8(mail)
-		content = convert_to_utf8(content)
-		subject = convert_to_utf8(subject)
 
 	NAME = name
 	MAIL = mail
@@ -137,15 +189,15 @@ async def write():
 		monazilla = "#sita"
 
 	if ipaddr in settings.get("KakikomiKiseiIPs", []):
-		if "Monazilla/1.00" in user_agent:
-			return await render_template("kakikomi_Error_sjis.html", message=f"現在このIPアドレス[{ipaddr}]は書き込み規制中です。またの機会にどうぞ。")
+		if if_utf8 is None:
+			return await sjis_error(f"現在このIPアドレス[{ipaddr}]は書き込み規制中です。またの機会にどうぞ。")
 		else:
 			return await render_template("kakikomi_Error.html", message=f"現在このIPアドレス[{ipaddr}]は書き込み規制中です。またの機会にどうぞ。")
 
 	# 板が指定されていない場合 または キーがない場合 かつ タイトルがない場合 または 本文がない場合
 	if (bbs == "") or (key == 0 and subject == "") or (content.replace("\n","") == ""):
-		if "Monazilla/1.00" in user_agent:
-			return await render_template("kakikomi_Error_sjis.html", message="フォーム情報を正しく読み込めません！")
+		if if_utf8 is None:
+			return await sjis_error("フォーム情報を正しく読み込めません！")
 		else:
 			return await render_template("kakikomi_Error.html", message="フォーム情報を正しく読み込めません！")
 
@@ -153,31 +205,31 @@ async def write():
 		#BBSがあるかどうか取得
 		bbs_data = await connection.fetchrow("SELECT * FROM bbs WHERE id = $1", bbs)
 	if bbs_data == None:
-		if "Monazilla/1.00" in user_agent:
-			return await render_template("kakikomi_Error_sjis.html", message="板情報を正しく読み込めません！")
+		if if_utf8 is None:
+			return await sjis_error("板情報を正しく読み込めません！")
 		else:
 			return await render_template("kakikomi_Error.html", message="板情報を正しく読み込めません！")
 
 	# 規制
 	if len(name) > 64:
-		if "Monazilla/1.00" in user_agent:
-			return await render_template("kakikomi_Error_sjis.html", message="名前欄の文字数が長すぎます！")
+		if if_utf8 is None:
+			return await sjis_error("名前欄の文字数が長すぎます！")
 		else:
 			return await render_template("kakikomi_Error.html", message="名前欄の文字数が長すぎます！")
 	if len(mail) > 32:
-		if "Monazilla/1.00" in user_agent:
-			return await render_template("kakikomi_Error_sjis.html", message="メール欄の文字数が長すぎます！")
+		if if_utf8 is None:
+			return await sjis_error("メール欄の文字数が長すぎます！")
 		else:
 			return await render_template("kakikomi_Error.html", message="メール欄の文字数が長すぎます！")
 	if len(content) > 512:
-		if "Monazilla/1.00" in user_agent:
-			return await render_template("kakikomi_Error_sjis.html", message="本文の文字数が長すぎます！")
+		if if_utf8 is None:
+			return await sjis_error("本文の文字数が長すぎます！")
 		else:
 			return await render_template("kakikomi_Error.html", message="本文の文字数が長すぎます！")
 	
 	if content.count("\n") > 15:
-		if "Monazilla/1.00" in user_agent:
-			return await render_template("kakikomi_Error_sjis.html", message="改行が多すぎます！")
+		if if_utf8 is None:
+			return await sjis_error("改行が多すぎます！")
 		else:
 			return await render_template("kakikomi_Error.html", message="改行が多すぎます！")
 
@@ -191,8 +243,8 @@ async def write():
 
 	for word in settings.get("KakikomiKiseiWords", []):
 		if word in content:
-			if "Monazilla/1.00" in user_agent:
-				return await render_template("kakikomi_Error_sjis.html", message=f"禁止ワードが含まれています！[{word}]")
+			if if_utf8 is None:
+				return await sjis_error(f"禁止ワードが含まれています！[{word}]")
 			else:
 				return await render_template("kakikomi_Error.html", message=f"禁止ワードが含まれています！[{word}]")
 
@@ -235,8 +287,8 @@ async def write():
 				"id": id,
 				"count": count
 			}, room=f"{bbs}_{int(date.timestamp()) if key is None else key}")
-			if "Monazilla/1.00" in user_agent:
-				response = await make_response(await render_template("kakikomi_ok_sjis.html", encoding='cp931', bbs_id=bbs, key=int(date.timestamp()) if key is None else key, monazilla=monazilla))
+			if if_utf8 is None:
+				response = await sjis_ok(bbs, int(date.timestamp()) if key is None else key)
 			else:
 				response = await make_response(await render_template("kakikomi_ok.html", bbs_id=bbs, key=int(date.timestamp()) if key is None else key, monazilla=monazilla))
 			response.set_cookie("NAME", value=NAME, expires=int(datetime.now().timestamp()) + 60*60*24*365*10)
@@ -297,16 +349,16 @@ async def write():
 				"id": id,
 				"count": count
 			}, room=f"{bbs}_{int(date.timestamp()) if key is None else key}")
-			if "Monazilla/1.00" in user_agent:
-				response = await make_response(await render_template("kakikomi_ok_sjis.html", encoding='cp931', bbs_id=bbs, key=int(date.timestamp()) if key is None else key, monazilla=monazilla))
+			if if_utf8 is None:
+				response = await sjis_ok(bbs, int(date.timestamp()) if key is None else key)
 			else:
 				response = await make_response(await render_template("kakikomi_ok.html", bbs_id=bbs, key=int(date.timestamp()) if key is None else key, monazilla=monazilla))
 			response.set_cookie("NAME", value=NAME, expires=int(datetime.now().timestamp()) + 60*60*24*365*10)
 			response.set_cookie("MAIL", value=MAIL, expires=int(datetime.now().timestamp()) + 60*60*24*365*10)
 			return response
 	else:
-		if "Monazilla/1.00" in user_agent:
-			return await render_template("kakikomi_Error_sjis.html", message=f"連投規制中です！あと{(rentoukisei[ipaddr] + 10) - int(date.timestamp())}秒お待ち下さい。")
+		if if_utf8 is None:
+			return await sjis_error(f"連投規制中です！あと{(rentoukisei[ipaddr] + 10) - int(date.timestamp())}秒お待ち下さい。")
 		else:
 			return await render_template("kakikomi_Error.html", message=f"連投規制中です！あと{(rentoukisei[ipaddr] + 10) - int(date.timestamp())}秒お待ち下さい。")
 
