@@ -96,7 +96,7 @@ def convert_to_utf8(data):
 	print(detected_encoding['encoding'])
 	if detected_encoding['encoding'] == 'SHIFT_JIS':
 		# Shift-JISであればUTF-8に変換する
-		return codecs.decode(data, 'shift_jis', 'replace').encode('utf-8', 'replace')
+		return codecs.decode(data, 'cp932', 'replace').encode('utf-8', 'replace')
 	else:
 		# それ以外の場合はそのまま返す
 		return data
