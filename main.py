@@ -221,6 +221,15 @@ async def write():
 					1,
 					int(date.timestamp())
 				)
+			await sio.emit('thread_writed', {
+				'message': 'thread_writed',
+				'name': lastName,
+				'mail': mail,
+				'content': content,
+				'date': date.timestamp(),
+				"id": id,
+				"count": count
+			}, room=f"{bbs}_{int(date.timestamp()) if key is None else key}")
 			if "Monazilla/1.00" in user_agent:
 				return await render_template("kakikomi_ok_sjis.html", bbs_id=bbs, key=int(date.timestamp()) if key is None else key, monazilla=monazilla)
 			else:
@@ -271,6 +280,15 @@ async def write():
 					count,
 					int(date.timestamp())
 				)
+			await sio.emit('thread_writed', {
+				'message': 'thread_writed',
+				'name': lastName,
+				'mail': mail,
+				'content': content,
+				'date': date.timestamp(),
+				"id": id,
+				"count": count
+			}, room=f"{bbs}_{int(date.timestamp()) if key is None else key}")
 			if "Monazilla/1.00" in user_agent:
 				return await render_template("kakikomi_ok_sjis.html", bbs_id=bbs, key=int(date.timestamp()) if key is None else key, monazilla=monazilla)
 			else:
