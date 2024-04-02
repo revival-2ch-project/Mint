@@ -230,7 +230,7 @@ async def write():
 				'message': 'thread_writed',
 				'name': lastName,
 				'mail': mail,
-				'content': content,
+				'content': BBSTools.convert_to_link(content),
 				'date': date.strftime("%Y/%m/%d(%a) %H:%M:%S.%f"),
 				"id": id,
 				"count": count
@@ -292,7 +292,7 @@ async def write():
 				'message': 'thread_writed',
 				'name': lastName,
 				'mail': mail,
-				'content': content,
+				'content': BBSTools.convert_to_link(content),
 				'date': date.strftime("%Y/%m/%d(%a) %H:%M:%S.%f"),
 				"id": id,
 				"count": count
