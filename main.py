@@ -154,8 +154,8 @@ async def sjis_ok(bbs, key):
 async def write():
 	form = await request.form
 	if_utf8 = form.get("if_utf8", None, type=bool)
-	data = await request.get_data()
-	decoded_data = urllib.parse.unquote(data.decode(), "utf-8" if if_utf8 is not None else "cp932")
+	data = await request.get_data().replace("+", " ")
+	decoded_data = urllib.parse.unquote(data, "utf-8" if if_utf8 is not None else "cp932")
 	
 	# URLエンコードされたデータを辞書に変換
 	post_data_dict = {}
