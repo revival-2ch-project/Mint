@@ -417,6 +417,7 @@ def page_not_found(error):
 
 #socketioのイベント類
 room_count = defaultdict(lambda: 0)
+global_count = 0
 
 @sio.event
 async def connect(sid, environ, auth):
@@ -442,14 +443,16 @@ def get_sid_rooms(sid):
 
 @sio.event
 async def disconnect(sid):
+	global_count -= 1
 	for room in get_sid_rooms(sid):
 		room_count[room] -= 1
-		await sio.emit('message_event', {'message': 'client disconnected', 'clients': room_count[room]}, room=room)
+		await sio.emit('message_event', {'message': 'client disconnected', 'clients': room_count[room], 'global_count': global_count}, room=room)
 	print('disconnected', sid)
 
 @sio.event
 async def join_room(sid, room):
 	await sio.enter_room(sid, room)
+	global_count += 1
 	room_count[room] += 1
-	await sio.emit('message_event', {'message': 'client connected', 'clients': room_count[room]}, room=room)
+	await sio.emit('message_event', {'message': 'client connected', 'clients': room_count[room], 'global_count': global_count}, room=room)
 	print('joinned', room)

@@ -66,7 +66,7 @@
 			socket.on('message_event', (data) => {
 				console.log('Received message_event:', data);
 				let member_count = document.getElementById("member_count");
-				member_count.innerHTML = "現在"+data["clients"]+"人が閲覧中！";
+				member_count.innerHTML = "現在"+data["clients"]+"人が閲覧中！<br>サーバー全体では"+data["global_count"]+"人が閲覧中！";
 			});
 
 			socket.on('thread_writed', (data) => {
