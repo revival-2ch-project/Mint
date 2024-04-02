@@ -512,7 +512,6 @@ async def disconnect(sid):
 async def join_room(sid, room):
 	await sio.enter_room(sid, room)
 	room_count[room] += 1
-	await sio.emit('global_count_event', {'message': 'client disconnected', 'global_count': global_count})
 	await sio.emit('count_event', {'message': 'client connected', 'clients': room_count[room]}, room=room)
 	print('joinned', room)
 	print('connected member count', room_count[room])
