@@ -17,6 +17,8 @@ import random
 import codecs
 import chardet
 import sys
+import socketio
+from collections import defaultdict
 
 rentoukisei = defaultdict(lambda: int((datetime.now() + settings.get("timezone", timedelta(hours=0))).timestamp()) - 10)
 
@@ -29,22 +31,24 @@ if os.path.isfile(".env"):
 DATABASE_URL = os.getenv("database")
 
 # 次にQuartの初期化
-app = Quart(__name__)
+quart_app = Quart(__name__)
+sio = socketio.AsyncServer(async_mode='asgi')
+app = socketio.ASGIApp(sio, quart_app)
 
-app.jinja_env.filters['encode_sjis'] = lambda u: codecs.encode(str(u), 'shift_jis')
+quart_app.jinja_env.filters['encode_sjis'] = lambda u: codecs.encode(str(u), 'shift_jis')
 
 if os.getenv("debug") == "TRUE":
-	app.debug = True
-	app.config['TEMPLATES_AUTO_RELOAD'] = True
+	quart_app.debug = True
+	quart_app.config['TEMPLATES_AUTO_RELOAD'] = True
 
 # データベースの準備
-@app.before_serving
+@quart_app.before_serving
 async def create_db_pool():
-	app.db_pool = await asyncpg.create_pool(DATABASE_URL)
+	quart_app.db_pool = await asyncpg.create_pool(DATABASE_URL)
 
-@app.after_serving
+@quart_app.after_serving
 async def create_db_pool():
-	await app.db_pool.close()
+	await quart_app.db_pool.close()
 
 async def sjis(dat):
 	response = await dat
@@ -59,19 +63,19 @@ async def sjis(dat):
 	return response
 
 # Quartのページ類
-@app.route("/")
+@quart_app.route("/")
 async def hello():
 	return "Mint BBS Test"
 
-@app.route('/css/<path:filename>')
+@quart_app.route('/css/<path:filename>')
 async def css(filename):
 	response = await send_from_directory('./static/css/', filename)
 	response.content_type = "text/css"
 	return response
 
-@app.route("/<string:bbs>/")
+@quart_app.route("/<string:bbs>/")
 async def bbsPage(bbs: str):
-	async with app.db_pool.acquire() as connection:
+	async with quart_app.db_pool.acquire() as connection:
 		bbs_name = await connection.fetchval("SELECT bbs_name FROM bbs WHERE id = $1", bbs)
 		anonymous_name = await connection.fetchval("SELECT anonymous_name FROM bbs WHERE id = $1", bbs)
 		description = await connection.fetchval("SELECT description FROM bbs WHERE id = $1", bbs)
@@ -96,7 +100,7 @@ def convert_to_utf8(data):
 		# それ以外の場合はそのまま返す
 		return data
 
-@app.route("/test/bbs.cgi", methods=["POST"])
+@quart_app.route("/test/bbs.cgi", methods=["POST"])
 async def write():
 	form = await request.form
 	bbs = form.get("bbs", "")
@@ -140,7 +144,7 @@ async def write():
 		else:
 			return await render_template("kakikomi_Error.html", message="フォーム情報を正しく読み込めません！")
 
-	async with app.db_pool.acquire() as connection:
+	async with quart_app.db_pool.acquire() as connection:
 		#BBSがあるかどうか取得
 		bbs_data = await connection.fetchrow("SELECT * FROM bbs WHERE id = $1", bbs)
 	if bbs_data == None:
@@ -193,7 +197,7 @@ async def write():
 		rentoukisei[ipaddr] = date.timestamp()
 		if subject != "":
 			subject = html.escape(subject)
-			async with app.db_pool.acquire() as connection:
+			async with quart_app.db_pool.acquire() as connection:
 				if lastName == "":
 					lastName = await connection.fetchval("SELECT anonymous_name FROM bbs WHERE id = $1", bbs)
 				data = {"data": [{
@@ -217,9 +221,12 @@ async def write():
 					1,
 					int(date.timestamp())
 				)
-			return await render_template("kakikomi_ok.html", bbs_id=bbs, key=int(date.timestamp()), monazilla=monazilla)
+			if "Monazilla/1.00" in user_agent:
+				return await render_template("kakikomi_ok_sjis.html", bbs_id=bbs, key=int(date.timestamp()) if key is None else key, monazilla=monazilla)
+			else:
+				return await render_template("kakikomi_ok.html", bbs_id=bbs, key=int(date.timestamp()) if key is None else key, monazilla=monazilla)
 		else:
-			async with app.db_pool.acquire() as connection:
+			async with quart_app.db_pool.acquire() as connection:
 				if lastName == "":
 					lastName = await connection.fetchval("SELECT anonymous_name FROM bbs WHERE id = $1", bbs)
 				row = await connection.fetchrow("SELECT data, count FROM threads WHERE id = $1 AND bbs_id = $2", key, bbs)
@@ -264,16 +271,19 @@ async def write():
 					count,
 					int(date.timestamp())
 				)
-			return await render_template("kakikomi_ok.html", bbs_id=bbs, key=int(date.timestamp()) if key is None else key, monazilla=monazilla)
+			if "Monazilla/1.00" in user_agent:
+				return await render_template("kakikomi_ok_sjis.html", bbs_id=bbs, key=int(date.timestamp()) if key is None else key, monazilla=monazilla)
+			else:
+				return await render_template("kakikomi_ok.html", bbs_id=bbs, key=int(date.timestamp()) if key is None else key, monazilla=monazilla)
 	else:
 		if "Monazilla/1.00" in user_agent:
 			return await render_template("kakikomi_Error_sjis.html", message=f"連投規制中です！あと{(rentoukisei[ipaddr] + 10) - int(date.timestamp())}秒お待ち下さい。")
 		else:
 			return await render_template("kakikomi_Error.html", message=f"連投規制中です！あと{(rentoukisei[ipaddr] + 10) - int(date.timestamp())}秒お待ち下さい。")
 
-@app.route("/<string:bbs>/subject.txt")
+@quart_app.route("/<string:bbs>/subject.txt")
 async def subjecttxt(bbs: str):
-	async with app.db_pool.acquire() as connection:
+	async with quart_app.db_pool.acquire() as connection:
 		raw_threads = await connection.fetch("SELECT * FROM threads WHERE bbs_id = $1", bbs)
 	ss = []
 	for thread in raw_threads:
@@ -284,9 +294,9 @@ async def subjecttxt(bbs: str):
 
 	return response
 
-@app.route("/<string:bbs>/SETTING.TXT")
+@quart_app.route("/<string:bbs>/SETTING.TXT")
 async def threadSettingTxt(bbs: str):
-	async with app.db_pool.acquire() as connection:
+	async with quart_app.db_pool.acquire() as connection:
 		values = await connection.fetchrow("SELECT * FROM bbs WHERE id = $1", bbs)
 		s = []
 		s.append(f'BBS_TITLE={values["bbs_name"]}')
@@ -301,9 +311,9 @@ async def threadSettingTxt(bbs: str):
 
 		return response
 
-@app.route("/<string:bbs>/dat/<int:key>.dat")
+@quart_app.route("/<string:bbs>/dat/<int:key>.dat")
 async def threadDat(bbs: str, key: int):
-	async with app.db_pool.acquire() as connection:
+	async with quart_app.db_pool.acquire() as connection:
 		values = await connection.fetchrow("SELECT * FROM threads WHERE id = $1 AND bbs_id = $2", key, bbs)
 		if values is None:
 			return "Thread not found", 404  # スレッドが見つからない場合は404エラーを返すなどの処理を行う
@@ -325,9 +335,9 @@ async def threadDat(bbs: str, key: int):
 
 		return response
 
-@app.route("/test/read.cgi/<string:bbs>/<int:key>/")
+@quart_app.route("/test/read.cgi/<string:bbs>/<int:key>/")
 async def threadPage(bbs: str, key: int):
-	async with app.db_pool.acquire() as connection:
+	async with quart_app.db_pool.acquire() as connection:
 		values = await connection.fetchrow("SELECT * FROM threads WHERE id = $1 AND bbs_id = $2", key, bbs)
 		if values is None:
 			return "Thread not found", 404  # スレッドが見つからない場合は404エラーを返すなどの処理を行う
@@ -336,6 +346,7 @@ async def threadPage(bbs: str, key: int):
 			res_data["data"][i]["date"] = datetime.fromtimestamp(v["date"]).strftime("%Y/%m/%d(%a) %H:%M:%S.%f")
 			res_data["data"][i]["content"] = res_data["data"][i]["content"].replace("\r\n"," <br> ").replace("\n"," <br> ").replace("\r"," <br> ")
 			res_data["data"][i]["content"] = BBSTools.convert_to_link(res_data["data"][i]["content"])
+		host = request.host
 		return await render_template(
 			"thread_view.html",
 			data=values,
@@ -343,10 +354,49 @@ async def threadPage(bbs: str, key: int):
 			bbs_id=bbs,
 			key=key,
 			anonymous_name=await connection.fetchval("SELECT anonymous_name FROM bbs WHERE id = $1", bbs),
-			ver=mintverinfo
+			ver=mintverinfo,
+			host=host,
 		)
 
-
-@app.errorhandler(404)
+@quart_app.errorhandler(404)
 def page_not_found(error):
 	return "404 Not Found", 404
+
+#socketioのイベント類
+room_count = defaultdict(lambda: 0)
+
+@sio.event
+async def connect(sid, environ, auth):
+	print(f'connected', sid)
+
+def get_sid_rooms(sid):
+	"""
+	Get the rooms that a given sid is subscribed to.
+
+	Args:
+		sid: The SID of the client to get the rooms for.
+
+	Returns:
+		A set of room names.
+	"""
+
+	rooms = set()
+	room_ids = sio.rooms(sid)
+	for room_id in room_ids:
+		rooms.add(room_id)
+
+	return rooms
+
+@sio.event
+async def disconnect(sid):
+	for room in get_sid_rooms(sid):
+		room_count[room] -= 1
+		await sio.emit('message_event', {'message': 'client disconnected', 'clients': room_count[room]}, room=room)
+	print('disconnected', sid)
+
+@sio.event
+async def join_room(sid, room):
+	await sio.enter_room(sid, room)
+	room_count[room] += 1
+	await sio.emit('message_event', {'message': 'client connected', 'clients': room_count[room]}, room=room)
+	print('joinned', room)

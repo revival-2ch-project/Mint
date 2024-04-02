@@ -7,3 +7,11 @@ body {
 	border-color: var(--bs-secondary-color);
 	border-radius: 10px;
 }
+
+.thread_member_count {
+	color: var(--bs-body-color);
+	background-color: var(--bs-secondary-bg);
+	position: fixed;
+	right: 0;
+	top: 0;
+}
