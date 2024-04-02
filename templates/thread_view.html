@@ -42,7 +42,7 @@
 			<form method="post" action="/test/bbs.cgi">
 				<input type="submit" name="submit" value="書き込む"> <label>名前: <input type="text" name="FROM" placeholder="{{ anonymous_name }}" value="{{ request.cookies.NAME }}" /></label>
 				<label>メール: <input type="mail" name="mail" placeholder="省略可" value="{{ request.cookies.MAIL }}" /></label> <br/>
-				<label>内容: <br><textarea name="MESSAGE" cols="60" rows="5"></textarea></label>
+				<label>内容: <br><textarea name="MESSAGE" style="width:auto;height:90px" cols="60" rows="5"></textarea></label>
 				<input type="hidden" name="bbs" value="{{ bbs_id }}">
 				<input type="hidden" name="key" value="{{ key }}">
 			</form>
