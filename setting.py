@@ -9,7 +9,8 @@ settings = {
 	"KakikomiKiseiWords": [
 		"https://discord.gg/jG3juaVqE4",
 	],
-	"timezone":  datetime.timedelta(hours=9)
+	"timezone":  datetime.timedelta(hours=9),
+	"ssloption": "https",
 }
 
 # Mint Version Info. Please do not rewrite!
