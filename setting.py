@@ -16,6 +16,6 @@ settings = {
 # Mintのバージョン情報です。書き直さないでください！
 mintverinfo = {
 	"ver": "0.0.1β",
-	"buildnum": 3,
+	"buildnum": 4,
 	"codename": "jailbreak"
 }
