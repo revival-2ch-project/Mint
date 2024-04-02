@@ -49,6 +49,13 @@ class BBSTools():
 		# /dev/randomを使わない設定の場合は、ランダムな数字(16桁)。
 		# 日付が変わると更新される。日付が同じなら再利用される。
 		# サーバをクラックしない限り、値は分かりません。
+		# 日付を取得してシード値として使用する
+		today = datetime.strftime("%Y%m%d")
+
+		# 日付に基づいて乱数生成器を初期化
+		random.seed(today)
+
+		# 16桁のランダムな数字を生成する
 		rand = ''.join([str(random.randint(0, 9)) for _ in range(16)])
 
 		# IPアドレスからMD5を算出する。(16進数形式)
