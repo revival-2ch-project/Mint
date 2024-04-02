@@ -143,7 +143,7 @@ async def write():
 			return await render_template("kakikomi_Error.html", message=f"現在このIPアドレス[{ipaddr}]は書き込み規制中です。またの機会にどうぞ。")
 
 	# 板が指定されていない場合 または キーがない場合 かつ タイトルがない場合 または 本文がない場合
-	if (bbs == "") or (key == 0 and subject == "") or (content == ""):
+	if (bbs == "") or (key == 0 and subject == "") or (content.replace("\n","") == ""):
 		if "Monazilla/1.00" in user_agent:
 			return await render_template("kakikomi_Error_sjis.html", message="フォーム情報を正しく読み込めません！")
 		else:
