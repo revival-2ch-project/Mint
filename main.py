@@ -185,7 +185,7 @@ async def write():
 	name = html.escape(name)
 	lastName = BBSTools.getTripbyName(name)
 	date = datetime.now() + settings.get("timezone", timedelta(hours=9))
-	id = BBSTools.generateIDbyHostandTimestamp(ipaddr, date)
+	id = BBSTools.generateID(ipaddr, bbs, date)
 	content = html.escape(content)
 	mail = html.escape(mail)
 
