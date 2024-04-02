@@ -10,15 +10,13 @@ from tools import BBSTools
 from setting import settings, mintverinfo
 from datetime import datetime, timedelta
 import json
-import locale
 import html
 from collections import defaultdict
-import random
 import codecs
 import chardet
-import sys
 import socketio
 from collections import defaultdict
+import feedgen.feed
 
 rentoukisei = defaultdict(lambda: int((datetime.now() + settings.get("timezone", timedelta(hours=0))).timestamp()) - 10)
 
@@ -80,13 +78,16 @@ async def bbsPage(bbs: str):
 		anonymous_name = await connection.fetchval("SELECT anonymous_name FROM bbs WHERE id = $1", bbs)
 		description = await connection.fetchval("SELECT description FROM bbs WHERE id = $1", bbs)
 		raw_threads = await connection.fetch("SELECT * FROM threads WHERE bbs_id = $1 ORDER BY last_write_time DESC", bbs)
+	host = request.host
 	return await render_template("bbsPage.html",
 							  bbs_name=bbs_name,
 							  description=description,
 							  threads=raw_threads,
 							  anonymous_name=anonymous_name,
 							  bbs_id = bbs,
-							  ver=mintverinfo
+							  settings=settings,
+							  ver=mintverinfo,
+							  host=host,
 				 )
 
 def convert_to_utf8(data):
@@ -121,7 +122,10 @@ async def write():
 		mail = convert_to_utf8(mail)
 		content = convert_to_utf8(content)
 		subject = convert_to_utf8(subject)
-	
+
+	NAME = name
+	MAIL = mail
+
 	if forwarded_for:
 		ipaddr = forwarded_for.split(',')[0]  # 複数のIPアドレスがカンマ区切りで送信される場合があるため、最初のものを取得
 	else:
@@ -220,7 +224,7 @@ async def write():
 					subject,
 					data_json,
 					1,
-					int(date.timestamp())
+					int(date.timestamp()) if not "sage" in mail else 0
 				)
 			await sio.emit('thread_writed', {
 				'message': 'thread_writed',
@@ -232,9 +236,12 @@ async def write():
 				"count": count
 			}, room=f"{bbs}_{int(date.timestamp()) if key is None else key}")
 			if "Monazilla/1.00" in user_agent:
-				return await render_template("kakikomi_ok_sjis.html", bbs_id=bbs, key=int(date.timestamp()) if key is None else key, monazilla=monazilla)
+				response = await make_response(await render_template("kakikomi_ok_sjis.html", bbs_id=bbs, key=int(date.timestamp()) if key is None else key, monazilla=monazilla))
 			else:
-				return await render_template("kakikomi_ok.html", bbs_id=bbs, key=int(date.timestamp()) if key is None else key, monazilla=monazilla)
+				response = await make_response(await render_template("kakikomi_ok.html", bbs_id=bbs, key=int(date.timestamp()) if key is None else key, monazilla=monazilla))
+			response.set_cookie("NAME", value=NAME, expires=int(datetime.now().timestamp()) + 60*60*24*365*10)
+			response.set_cookie("MAIL", value=MAIL, expires=int(datetime.now().timestamp()) + 60*60*24*365*10)
+			return response
 		else:
 			async with quart_app.db_pool.acquire() as connection:
 				if lastName == "":
@@ -279,7 +286,7 @@ async def write():
 					bbs,
 					data_json,
 					count,
-					int(date.timestamp())
+					int(date.timestamp()) if not "sage" in mail else 0
 				)
 			await sio.emit('thread_writed', {
 				'message': 'thread_writed',
@@ -291,9 +298,12 @@ async def write():
 				"count": count
 			}, room=f"{bbs}_{int(date.timestamp()) if key is None else key}")
 			if "Monazilla/1.00" in user_agent:
-				return await render_template("kakikomi_ok_sjis.html", bbs_id=bbs, key=int(date.timestamp()) if key is None else key, monazilla=monazilla)
+				response = await make_response(await render_template("kakikomi_ok_sjis.html", bbs_id=bbs, key=int(date.timestamp()) if key is None else key, monazilla=monazilla))
 			else:
-				return await render_template("kakikomi_ok.html", bbs_id=bbs, key=int(date.timestamp()) if key is None else key, monazilla=monazilla)
+				response = await make_response(await render_template("kakikomi_ok.html", bbs_id=bbs, key=int(date.timestamp()) if key is None else key, monazilla=monazilla))
+			response.set_cookie("NAME", value=NAME, expires=int(datetime.now().timestamp()) + 60*60*24*365*10)
+			response.set_cookie("MAIL", value=MAIL, expires=int(datetime.now().timestamp()) + 60*60*24*365*10)
+			return response
 	else:
 		if "Monazilla/1.00" in user_agent:
 			return await render_template("kakikomi_Error_sjis.html", message=f"連投規制中です！あと{(rentoukisei[ipaddr] + 10) - int(date.timestamp())}秒お待ち下さい。")
@@ -329,6 +339,28 @@ async def threadSettingTxt(bbs: str):
 		response = await sjis(response)  # sjis関数を呼び出す
 
 		return response
+
+@quart_app.route("/<string:bbs>/threads.rdf")
+async def rss_feed(bbs: str):
+	async with quart_app.db_pool.acquire() as connection:
+		bbs_name = await connection.fetchval("SELECT bbs_name FROM bbs WHERE id = $1", bbs)
+		description = await connection.fetchval("SELECT description FROM bbs WHERE id = $1", bbs)
+		raw_threads = await connection.fetch("SELECT * FROM threads WHERE bbs_id = $1", bbs)
+	ss = []
+	feed = feedgen.feed.FeedGenerator()
+	feed.title(f"{bbs_name} - {settings.get('name')}")
+	feed.description(description)
+	feed.link(href=f'{settings.get("ssloption","https")}://{request.host}/{bbs}/', rel='self')
+	for thread in raw_threads:
+		item = feed.add_entry()
+		item.title(f"{thread['title']} ({thread['count']})")
+		data = json.loads(thread["data"])
+		item.description(data["data"][0]["content"])
+		item.link(href=f'{settings.get("ssloption","https")}://{request.host}/test/read.cgi/{bbs}/{thread["id"]}/')
+	content = feed.rss_str(pretty=True)
+	response = await make_response(content)
+	response.content_type = "application/rss+xml charset=utf-8"
+	return content
 
 @quart_app.route("/<string:bbs>/dat/<int:key>.dat")
 async def threadDat(bbs: str, key: int):
@@ -376,6 +408,7 @@ async def threadPage(bbs: str, key: int):
 			settings=settings,
 			ver=mintverinfo,
 			host=host,
+			description=res_data["data"][0]["content"],
 		)
 
 @quart_app.errorhandler(404)

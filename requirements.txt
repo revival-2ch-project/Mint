@@ -4,3 +4,4 @@ passlib
 chardet
 hypercorn
 python_socketio
+feedgen
