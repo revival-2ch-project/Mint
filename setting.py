@@ -4,9 +4,12 @@ import datetime
 settings = {
 	"name": "Mint",
 	"KakikomiKiseiIPs": [
-		"59.170.129.247",
+		"<Enter Kisei IP>",
+		"<Enter Kisei IP>",
+		"<Enter Kisei IP>",
 	],
 	"KakikomiKiseiWords": [
+		"<Enter Kisei Words>",
 		"https://discord.gg/jG3juaVqE4",
 	],
 	"timezone":  datetime.timedelta(hours=9),
