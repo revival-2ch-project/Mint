@@ -17,6 +17,7 @@
 	<body style="background-color: #EFEFEF;">
 		<div class="thread_member_count">
 			<span id="member_count"></span>
+			<span id="global_member_count"></span>
 		</div>
 
 		<div class="top">
@@ -63,10 +64,16 @@
 				socket.emit('join_room', '{{bbs_id}}_{{key}}');
 			});
 
-			socket.on('message_event', (data) => {
+			socket.on('count_event', (data) => {
 				console.log('Received message_event:', data);
 				let member_count = document.getElementById("member_count");
-				member_count.innerHTML = "現在"+data["clients"]+"人が閲覧中！<br>サーバー全体では"+data["global_count"]+"人が閲覧中！";
+				member_count.innerHTML = "現在"+data["clients"]+"人が閲覧中！";
+			});
+
+			socket.on('global_count_event', (data) => {
+				console.log('Received message_event:', data);
+				let member_count = document.getElementById("global_member_count");
+				member_count.innerHTML = "サーバー全体では"+data["global_count"]+"人が閲覧中！";
 			});
 
 			socket.on('thread_writed', (data) => {
