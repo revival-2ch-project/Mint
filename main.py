@@ -285,7 +285,7 @@ async def write():
 				'content': BBSTools.convert_to_link(content),
 				'date': date.strftime("%Y/%m/%d(%a) %H:%M:%S.%f"),
 				"id": id,
-				"count": count
+				"count": 1
 			}, room=f"{bbs}_{int(date.timestamp()) if key is None else key}")
 			if if_utf8 is None:
 				response = await sjis_ok(bbs, int(date.timestamp()) if key is None else key)
