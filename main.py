@@ -288,9 +288,9 @@ async def write():
 				"count": 1
 			}, room=f"{bbs}_{int(date.timestamp()) if key is None else key}")
 			if if_utf8 is None:
-				response = await sjis_ok(bbs, int(date.timestamp()) if key is None else key)
+				response = await sjis_ok(bbs, int(date.timestamp()))
 			else:
-				response = await make_response(await render_template("kakikomi_ok.html", bbs_id=bbs, key=int(date.timestamp()) if key is None else key, monazilla=monazilla))
+				response = await make_response(await render_template("kakikomi_ok.html", bbs_id=bbs, key=int(date.timestamp()), monazilla=monazilla))
 			response.set_cookie("NAME", value=NAME, expires=int(datetime.now().timestamp()) + 60*60*24*365*10)
 			response.set_cookie("MAIL", value=MAIL, expires=int(datetime.now().timestamp()) + 60*60*24*365*10)
 			return response
