@@ -260,7 +260,7 @@ async def write():
 				data = {"data": [{
 					"name": lastName,
 					"mail": mail,
-					"date": date,
+					"date": date.timestamp(),
 					"content": content,
 					"id": id,
 					"ipaddr": ipaddr
