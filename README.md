@@ -11,12 +11,12 @@ pythonで作った2ch専ブラ互換の掲示板です。
 - Turnstileによる認証
 - BBSMENU
 ## 現在のバグ情報
-- 専ブラに対するサポートが正しくありません。  
-sjisに変換してるはずなんですけどね...
+- トリップの変換が正しくないらしい
+(不明)
 ## テスト環境
 - Python 3.11
 - supabase
-- render.com フリープラン
+- render.com Free
 ## How to install
 まず、以下のコマンドを使用し、Mintで使用されるライブラリをインストールします。  
 ```
