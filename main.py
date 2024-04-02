@@ -421,7 +421,10 @@ global_count = 0
 
 @sio.event
 async def connect(sid, environ, auth):
+	global global_count
+	global_count += 1
 	print(f'connected', sid)
+	print('connected member count', global_count)
 
 def get_sid_rooms(sid):
 	"""
@@ -449,12 +452,12 @@ async def disconnect(sid):
 		room_count[room] -= 1
 		await sio.emit('message_event', {'message': 'client disconnected', 'clients': room_count[room], 'global_count': global_count}, room=room)
 	print('disconnected', sid)
+	print('connected member count', global_count)
 
 @sio.event
 async def join_room(sid, room):
 	await sio.enter_room(sid, room)
-	global global_count
-	global_count += 1
 	room_count[room] += 1
 	await sio.emit('message_event', {'message': 'client connected', 'clients': room_count[room], 'global_count': global_count}, room=room)
 	print('joinned', room)
+	print('connected member count', room_count[room])
