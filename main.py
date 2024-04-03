@@ -86,6 +86,8 @@ async def bbsPage(bbs: str):
 		raw_threads = await connection.fetch("SELECT * FROM threads WHERE bbs_id = $1 ORDER BY last_write_time DESC", bbs)
 	if request.args.get('sort', 'normal') == "viewers":
 		raw_threads = sorted(raw_threads, key=sort_by_views, reverse=True)
+	for index, thread in enumerate(raw_threads):
+		raw_threads[index] = room_count.get(f'{thread.get("bbs_id","")}_{thread.get("id",0)}',0)
 	host = request.host
 	return await render_template("bbsPage.html",
 							  bbs_name=bbs_name,

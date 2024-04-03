@@ -78,7 +78,7 @@ class BBSTools():
 
 	def convert_res_anker(text):
 		# 正規表現を使用してURLを抽出
-		url_pattern = r'>>(\d+)'
+		url_pattern = r'&gt;&gt;(\d+)'
 		urls = re.findall(url_pattern, text)
 		
 		# 抽出したURLを<a>タグで置換して返す
