@@ -32,7 +32,7 @@
 
 		<div class="threads">
 			{% for thread in threads %}
-				<span>{{ loop.index }} ：<a href="/test/read.cgi/{{ bbs_id }}/{{ thread.id }}/">{{ thread.title }} ({{ thread.count }})</a></span> <br />
+				<span>{{ loop.index }} ：<a href="/test/read.cgi/{{ bbs_id }}/{{ thread.id }}/">{{ thread.title }} {{ thread.count }}</a></span> <br />
 			{% endfor %}
 		</div>
 
