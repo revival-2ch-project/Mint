@@ -22,7 +22,6 @@
 	background-color: rgba(var(--bs-secondary-bg-rgb), 0.5);
 	border: solid 0px;
 	border-radius: 10px;
-	text-align: center;
 }
 
 .menu {
