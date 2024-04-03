@@ -98,16 +98,23 @@ async def bbsPage(bbs: str):
 	threads = [record_to_dict(record) for record in raw_threads]
 	if request.args.get('sort', 'normal') == "viewers":
 		threads = sorted(threads, key=sort_by_views, reverse=True)
+	num = 0
 	for index, thread in enumerate(threads):
+		num += 1
 		count = room_count.get(f'{thread.get("bbs_id","")}_{thread.get("id",0)}',0)
 		threads[index]["count"] = f'({threads[index]["count"]})<small class="thread_count">({count}人)</small>'
+		threads[index]["num"] = num
+	mid = len(threads) // 2
+	threads_one = threads[:mid]
+	threads_two = threads[mid:]
 	host = request.host
 	return await render_template("bbsPage.html",
 							  bbs_name=bbs_name,
 							  description=description,
-							  threads=threads,
+							  threads_one=threads_one,
+							  threads_two=threads_two,
 							  anonymous_name=anonymous_name,
-							  bbs_id = bbs,
+							  bbs_id=bbs,
 							  settings=settings,
 							  ver=mintverinfo,
 							  host=host,
