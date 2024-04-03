@@ -14,48 +14,46 @@
 		<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
 		<link href="/css/style.css" rel="stylesheet">
 	</head>
-	<body style="background-color: #EFEFEF;">
-		<div class="thread_view">
-			<div class="thread_member_count">
-				<span id="member_count"></span> <br>
-				<span id="global_member_count"></span>
-			</div>
-	
-			<div class="top">
-				<a href="/{{ bbs_id }}/">■掲示板に戻る■</a>
-				<hr>
-				<h1>{{ data.title }}</h1>
-			</div>
-		
-			<div class="res" id="ress">
-				{% for _ in res_data %}
-					<a id="thread_{{ loop.index }}"></a>
-					{% if _.mail %}
-						<dt>{{ loop.index }} ：<font color="green"><b><a href="mailto:{{ _.mail }}">{{ _.name | safe }}</a></b></font>：{{ _.date }} ID:{{ _.id }}</dt>
-					{% else %}
-						<dt>{{ loop.index }} ：<font color="green"><b>{{ _.name | safe }}</b></font>：{{ _.date }} ID:{{ _.id }}</dt>
-					{% endif %}
-					<dd style="overflow-wrap: break-word;"> {{ _.content | safe }} <br><br></dd>
-				{% endfor %}
-			</div>
-			<a id="sita"></a>
+	<body style="background-color: #EFEFEF; padding: 10px;">
+		<div class="thread_member_count">
+			<span id="member_count"></span> <br>
+			<span id="global_member_count"></span>
+		</div>
+
+		<div class="top">
+			<a href="/{{ bbs_id }}/">■掲示板に戻る■</a>
 			<hr>
-			<a href="/{{ bbs_id }}/">掲示板に戻る</a>
-			<div class="kakikomi">
-				<form method="post" action="/test/bbs.cgi">
-					<input type="submit" name="submit" value="書き込む"> <label>名前: <input type="text" name="FROM" placeholder="{{ anonymous_name }}" value="{{ request.cookies.NAME }}" /></label>
-					<label>メール: <input type="mail" name="mail" placeholder="省略可" value="{{ request.cookies.MAIL }}" /></label> <br/>
-					<label>内容: <br><textarea name="MESSAGE" style="width:auto;height:90px" cols="60" rows="5"></textarea></label>
-					<input type="hidden" name="bbs" value="{{ bbs_id }}">
-					<input type="hidden" name="key" value="{{ key }}">
-					<input type="hidden" name="if_utf8" value="true" />
-				</form>
-			</div>
+			<h1>{{ data.title }}</h1>
+		</div>
 	
-			<div class="verinfo">
-				Mint v{{ ver.ver }} - CodeName "{{ ver.codename }}"<br>
-				<a href="https://github.com/revival-2ch-project/Mint" target="_blank">Mintはオープンソースで開発しています。あなたも開発に参加してみませんか？</a>
-			</div>
+		<div class="res" id="ress">
+			{% for _ in res_data %}
+				<a id="thread_{{ loop.index }}"></a>
+				{% if _.mail %}
+					<dt>{{ loop.index }} ：<font color="green"><b><a href="mailto:{{ _.mail }}">{{ _.name | safe }}</a></b></font>：{{ _.date }} ID:{{ _.id }}</dt>
+				{% else %}
+					<dt>{{ loop.index }} ：<font color="green"><b>{{ _.name | safe }}</b></font>：{{ _.date }} ID:{{ _.id }}</dt>
+				{% endif %}
+				<dd style="overflow-wrap: break-word;"> {{ _.content | safe }} <br><br></dd>
+			{% endfor %}
+		</div>
+		<a id="sita"></a>
+		<hr>
+		<a href="/{{ bbs_id }}/">掲示板に戻る</a>
+		<div class="kakikomi">
+			<form method="post" action="/test/bbs.cgi">
+				<input type="submit" name="submit" value="書き込む"> <label>名前: <input type="text" name="FROM" placeholder="{{ anonymous_name }}" value="{{ request.cookies.NAME }}" /></label>
+				<label>メール: <input type="mail" name="mail" placeholder="省略可" value="{{ request.cookies.MAIL }}" /></label> <br/>
+				<label>内容: <br><textarea name="MESSAGE" style="width:auto;height:90px" cols="60" rows="5"></textarea></label>
+				<input type="hidden" name="bbs" value="{{ bbs_id }}">
+				<input type="hidden" name="key" value="{{ key }}">
+				<input type="hidden" name="if_utf8" value="true" />
+			</form>
+		</div>
+
+		<div class="verinfo">
+			Mint v{{ ver.ver }} - CodeName "{{ ver.codename }}"<br>
+			<a href="https://github.com/revival-2ch-project/Mint" target="_blank">Mintはオープンソースで開発しています。あなたも開発に参加してみませんか？</a>
 		</div>
 
 		<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz" crossorigin="anonymous"></script>
