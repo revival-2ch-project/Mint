@@ -83,6 +83,6 @@ class BBSTools():
 		
 		# 抽出したURLを<a>タグで置換して返す
 		for url in urls:
-			text = text.replace(f"&gt;&gt;{url}", f'<a href="#{url}">&gt;&gt;{url}</a>')
+			text = text.replace(f"&gt;&gt;{url}", f'<a href="#thread_{url}">&gt;&gt;{url}</a>')
 		
 		return text
