@@ -18,6 +18,7 @@ import socketio
 from collections import defaultdict
 import feedgen.feed
 import urllib.parse
+import mimetypes
 
 rentoukisei = defaultdict(lambda: int((datetime.now() + settings.get("timezone", timedelta(hours=0))).timestamp()) - 10)
 room_count = defaultdict(lambda: 0)
@@ -74,6 +75,13 @@ async def css(filename):
 	response.content_type = "text/css"
 	return response
 
+@quart_app.route('/img/<path:filename>')
+async def img(filename):
+	response = await send_from_directory('./static/img/', filename)
+	mime_type, _ = mimetypes.guess_type(f'./static/img/{filename}')
+	response.content_type = mime_type
+	return response
+
 def sort_by_views(thread):
 	return room_count.get(f'{thread.get("bbs_id","")}_{thread.get("id",0)}',0)
 
@@ -92,7 +100,7 @@ async def bbsPage(bbs: str):
 		threads = sorted(threads, key=sort_by_views, reverse=True)
 	for index, thread in enumerate(threads):
 		count = room_count.get(f'{thread.get("bbs_id","")}_{thread.get("id",0)}',0)
-		threads[index]["count"] = f'({threads[index]["count"]})<small>{count}人</small>'
+		threads[index]["count"] = f'({threads[index]["count"]})<small class="thread_count">({count}人)</small>'
 	host = request.host
 	return await render_template("bbsPage.html",
 							  bbs_name=bbs_name,
