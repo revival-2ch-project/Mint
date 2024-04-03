@@ -91,7 +91,8 @@ async def bbsPage(bbs: str):
 	if request.args.get('sort', 'normal') == "viewers":
 		threads = sorted(threads, key=sort_by_views, reverse=True)
 	for index, thread in enumerate(threads):
-		threads[index]["count"] = "("+threads[index]["count"]+")<small>"+room_count.get(f'{thread.get("bbs_id","")}_{thread.get("id",0)}',0)+"人</small>"
+		count = room_count.get(f'{thread.get("bbs_id","")}_{thread.get("id",0)}',0)
+		threads[index]["count"] = f'({threads[index]["count"]})<small>{count}人</small>'
 	host = request.host
 	return await render_template("bbsPage.html",
 							  bbs_name=bbs_name,
