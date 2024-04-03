@@ -31,7 +31,7 @@
 				<label>タイトル: <input type="text" name="subject" placeholder="スレッドのタイトル" /></label> <br>
 				<label>名前: <input type="text" name="FROM" placeholder="{{ anonymous_name }}" value="{{ request.cookies.NAME }}" /></label> <br>
 				<label>メール: <input type="mail" name="mail" placeholder="省略可" value="{{ request.cookies.MAIL }}" /></label> <br/>
-				<label>内容: <br><textarea name="MESSAGE" style="width: 90%; height: 90px;"></textarea></label>
+				<label>内容: <br><textarea name="MESSAGE" style="max-width: 90%; max-height: 90px;"></textarea></label>
 				<input type="hidden" name="bbs" value="{{ bbs_id }}">
 				<input type="hidden" name="if_utf8" value="true" />
 			</form>
