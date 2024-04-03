@@ -28,6 +28,7 @@
 	
 		<div class="res" id="ress">
 			{% for _ in res_data %}
+				<a id="thread_{{ loop.index }}"></a>
 				{% if _.mail %}
 					<dt>{{ loop.index }} ：<font color="green"><b><a href="mailto:{{ _.mail }}">{{ _.name | safe }}</a></b></font>：{{ _.date }} ID:{{ _.id }}</dt>
 				{% else %}

@@ -75,3 +75,14 @@ class BBSTools():
 			text = text.replace(url, f'<a href="{url}">{url}</a>')
 		
 		return text
+
+	def convert_res_anker(text):
+		# 正規表現を使用してURLを抽出
+		url_pattern = r'>>(\d+)'
+		urls = re.findall(url_pattern, text)
+		
+		# 抽出したURLを<a>タグで置換して返す
+		for url in urls:
+			text = text.replace(url, f'<a href="#{url}">&gt;&gt;{url}</a>')
+		
+		return text
