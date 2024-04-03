@@ -83,7 +83,7 @@ async def bbsPage(bbs: str):
 		bbs_name = await connection.fetchval("SELECT bbs_name FROM bbs WHERE id = $1", bbs)
 		anonymous_name = await connection.fetchval("SELECT anonymous_name FROM bbs WHERE id = $1", bbs)
 		description = await connection.fetchval("SELECT description FROM bbs WHERE id = $1", bbs)
-		raw_threads = await connection.fetch("SELECT * FROM threads WHERE bbs_id = $1 ORDER BY last_write_time DESC", bbs)
+		raw_threads = dict(await connection.fetch("SELECT * FROM threads WHERE bbs_id = $1 ORDER BY last_write_time DESC", bbs))
 	if request.args.get('sort', 'normal') == "viewers":
 		raw_threads = sorted(raw_threads, key=sort_by_views, reverse=True)
 	for index, thread in enumerate(raw_threads):
