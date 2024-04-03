@@ -9,8 +9,9 @@ settings = {
 		"<Enter Kisei IP>",
 	],
 	"KakikomiKiseiWords": [
+		"discord.com/invite",
+		"discord.gg",
 		"<Enter Kisei Words>",
-		"https://discord.gg/jG3juaVqE4",
 	],
 	"timezone":  datetime.timedelta(hours=9),
 	"ssloption": "https",

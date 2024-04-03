@@ -20,6 +20,8 @@ import feedgen.feed
 import urllib.parse
 
 rentoukisei = defaultdict(lambda: int((datetime.now() + settings.get("timezone", timedelta(hours=0))).timestamp()) - 10)
+room_count = defaultdict(lambda: 0)
+global_count = 0
 
 # .envがあった場合、優先的にロード
 if os.path.isfile(".env"):
@@ -72,6 +74,9 @@ async def css(filename):
 	response.content_type = "text/css"
 	return response
 
+def sort_by_views(thread):
+	return room_count.get(f'{thread.get("bbs_id","")}_{thread.get("id",0)}',0)
+
 @quart_app.route("/<string:bbs>/")
 async def bbsPage(bbs: str):
 	async with quart_app.db_pool.acquire() as connection:
@@ -79,6 +84,8 @@ async def bbsPage(bbs: str):
 		anonymous_name = await connection.fetchval("SELECT anonymous_name FROM bbs WHERE id = $1", bbs)
 		description = await connection.fetchval("SELECT description FROM bbs WHERE id = $1", bbs)
 		raw_threads = await connection.fetch("SELECT * FROM threads WHERE bbs_id = $1 ORDER BY last_write_time DESC", bbs)
+	if request.args.get('sort', 'normal') == "viewers":
+		raw_threads = sorted(raw_threads, key=sort_by_views, reverse=True)
 	host = request.host
 	return await render_template("bbsPage.html",
 							  bbs_name=bbs_name,
@@ -468,8 +475,6 @@ def page_not_found(error):
 	return "404 Not Found", 404
 
 #socketioのイベント類
-room_count = defaultdict(lambda: 0)
-global_count = 0
 
 @sio.event
 async def connect(sid, environ, auth):

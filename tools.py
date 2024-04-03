@@ -25,7 +25,7 @@ class BBSTools():
 
 			trip_key = result.group(2)
 			if len(trip_key) <= 10:
-				tripkey = trip_key.encode('shift_jis')
+				tripkey = trip_key.encode('shift_jis', 'replace')
 				salt = (tripkey + b'H.')[1:3]
 				salt = re.sub(rb'[^\.-z]', b'.', salt)
 				salt = salt.translate(bytes.maketrans(b':;<=>?@[\\]^_`', b'ABCDEFGabcdef'))

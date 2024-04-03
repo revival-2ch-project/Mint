@@ -31,6 +31,10 @@
 			{% endfor %}
 		</div>
 
+		<div class="menu">
+			<a href="/{bbs_id}/">ノーマル順</a> | <a href="/{bbs_id}/?sort=viewers">閲覧人数順</a>
+		</div>
+
 		<div class="kakikomi">
 			<form method="post" action="/test/bbs.cgi">
 				<b>スレッドを作成</b> <input type="submit" name="submit" value="新規スレッド作成" /> <br>
