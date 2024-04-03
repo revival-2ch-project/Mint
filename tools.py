@@ -37,7 +37,7 @@ class BBSTools():
 				code = base64.b64encode(code, b'./')
 				code = code[:12]
 				trip = code.decode('utf8')
-			return f"{name2}</b>◆{trip}<b>"
+			return f"{name2} </b>◆{trip}<b>"
 		else:
 			return name.replace("◆","◇").replace("★","☆").replace("●","○")
 
