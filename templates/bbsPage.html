@@ -65,7 +65,7 @@
 
 			socket.on('connect', () => {
 				console.log('connection successful');
-				socket.emit('join_room', '{{bbs_id}}');
+				socket.emit('join_room', '{{ bbs_id }}');
 			});
 
 			socket.on('count_event', (data) => {
