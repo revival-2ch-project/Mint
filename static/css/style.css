@@ -37,6 +37,19 @@
 	flex: 1;
 }
 
+@media screen and (max-width: 600px) {
+	.flex {
+		flex-direction: column;
+	}
+
+	.threads {
+		margin-top: 10px; /* 上部のマージン */
+		margin-bottom: 10px; /* 下部のマージン */
+		flex: unset; /* フレックスの設定を解除 */
+		width: auto; /* 幅を自動に設定 */
+	}
+}
+
 .thread_member_count {
 	padding: 5px;
 	color: var(--bs-body-color);
@@ -56,4 +69,5 @@
 	border: solid 0px;
 	border-radius: 10px;
 	text-align: center;
+	font-size: 15px;
 }
