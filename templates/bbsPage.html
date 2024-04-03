@@ -32,7 +32,7 @@
 
 		<div class="threads">
 			{% for thread in threads %}
-				<span>{{ loop.index }} ：<a href="/test/read.cgi/{{ bbs_id }}/{{ thread.id }}/">{{ thread.title }} {{ thread.count }}</a></span> <br />
+				<span>{{ loop.index }} ：<a href="/test/read.cgi/{{ bbs_id }}/{{ thread.id }}/">{{ thread.title }} {{ thread.count | safe }}</a></span> <br />
 			{% endfor %}
 		</div>
 
@@ -54,7 +54,7 @@
 		</div>
 
 		<div class="verinfo">
-			Mint v{{ ver.ver }}(build num {{ ver.buildnum }}) - CodeName "{{ ver.codename }}"<br>
+			Mint v{{ ver.ver }} - CodeName "{{ ver.codename }}"<br>
 			<a href="https://github.com/revival-2ch-project/Mint" target="_blank">Mintはオープンソースで開発しています。あなたも開発に参加してみませんか？</a>
 		</div>
 
