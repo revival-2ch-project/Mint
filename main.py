@@ -311,7 +311,7 @@ async def write():
 				'message': 'thread_writed',
 				'name': lastName,
 				'mail': mail,
-				'content': BBSTools.convert_res_anker(BBSTools.convert_to_link(BBSTools.convert_image_link(content))),
+				'content': BBSTools.convert_image_link(BBSTools.convert_res_anker(BBSTools.convert_to_link(content))),
 				'date': date.strftime("%Y/%m/%d(%a) %H:%M:%S.%f"),
 				"id": id,
 				"count": 1
@@ -373,7 +373,7 @@ async def write():
 				'message': 'thread_writed',
 				'name': lastName,
 				'mail': mail,
-				'content': BBSTools.convert_res_anker(BBSTools.convert_to_link(BBSTools.convert_image_link(content))),
+				'content': BBSTools.convert_image_link(BBSTools.convert_res_anker(BBSTools.convert_to_link(content))),
 				'date': date.strftime("%Y/%m/%d(%a) %H:%M:%S.%f"),
 				"id": id,
 				"count": count
@@ -477,7 +477,7 @@ async def threadPage(bbs: str, key: int):
 		for i, v in enumerate(res_data.get("data", [])):
 			res_data["data"][i]["date"] = datetime.fromtimestamp(v["date"]).strftime("%Y/%m/%d(%a) %H:%M:%S.%f")
 			res_data["data"][i]["content"] = res_data["data"][i]["content"].replace("\r\n"," <br> ").replace("\n"," <br> ").replace("\r"," <br> ")
-			res_data["data"][i]["content"] = BBSTools.convert_res_anker(BBSTools.convert_to_link(BBSTools.convert_image_link(res_data["data"][i]["content"])))
+			res_data["data"][i]["content"] = BBSTools.convert_image_link(BBSTools.convert_res_anker(BBSTools.convert_to_link(res_data["data"][i]["content"])))
 		host = request.host
 		return await render_template(
 			"thread_view.html",
