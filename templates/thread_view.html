@@ -44,7 +44,7 @@
 		<a id="sita"></a>
 		<hr>
 		<a href="/{{ bbs_id }}/">掲示板に戻る</a>
-		<div class="kakikomi">
+		<div class="kakikomi" style="padding: 1px;">
 			<form method="post" action="/test/bbs.cgi">
 				<input type="submit" name="submit" value="書き込む"> <label>名前: <input type="text" name="FROM" placeholder="{{ anonymous_name }}" value="{{ request.cookies.NAME }}" /></label>
 				<label>メール: <input type="mail" name="mail" placeholder="省略可" value="{{ request.cookies.MAIL }}" /></label> <br/>

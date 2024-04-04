@@ -88,6 +88,18 @@ def sort_by_views(thread):
 def record_to_dict(record):
 	return dict(record)
 
+@quart_app.route("/")
+async def topPage():
+	async with quart_app.db_pool.acquire() as connection:
+		bbses = await connection.fetch("SELECT bbs_name FROM bbs")
+		host = request.host
+		return await render_template("index.html",
+								bbses=bbses,
+								settings=settings,
+								ver=mintverinfo,
+								host=host,
+							)
+
 @quart_app.route("/<string:bbs>/")
 async def bbsPage(bbs: str):
 	async with quart_app.db_pool.acquire() as connection:
