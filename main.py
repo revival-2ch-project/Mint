@@ -244,6 +244,11 @@ async def write():
 			return await sjis_error("名前欄の文字数が長すぎます！")
 		else:
 			return await render_template("kakikomi_Error.html", message="名前欄の文字数が長すぎます！")
+	if len(subject) > 64:
+		if if_utf8 is None:
+			return await sjis_error("メール欄の文字数が長すぎます！")
+		else:
+			return await render_template("kakikomi_Error.html", message="メール欄の文字数が長すぎます！")
 	if len(mail) > 32:
 		if if_utf8 is None:
 			return await sjis_error("メール欄の文字数が長すぎます！")
