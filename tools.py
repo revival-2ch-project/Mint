@@ -86,3 +86,14 @@ class BBSTools():
 			text = text.replace(f"&gt;&gt;{url}", f'<a href="#thread_{url}">&gt;&gt;{url}</a>')
 		
 		return text
+
+	def convert_image_link(text):
+		# 正規表現を使用してURLを抽出
+		url_pattern = r'https?://\S+.(?:png|jpg|jpeg|gif|webp|apng)'
+		urls = re.findall(url_pattern, text)
+		
+		# 抽出したURLを<a>タグで置換して返す
+		for url in urls:
+			text = text.replace(url, f'<a href="{url}" data-lightbox="group"><img src="{url}" style="width: 30%; height: 30%;"></a>')
+		
+		return text
