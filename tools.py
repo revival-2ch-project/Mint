@@ -92,10 +92,9 @@ class BBSTools():
 		url_pattern = r'(https?://\S+\.(?:png|jpg|jpeg|gif|webp|apng))'  # 画像リンクのパターン
 		urls = re.findall(url_pattern, text)
 		
-		# 抽出した画像リンクを<a>タグで置換して返す
+		# 抽出した画像リンクを<img>タグで置換して返す
 		for url in urls:
-			# IMGタグを生成
 			img_tag = f'<a href="{url}" data-lightbox="group"><img src="{url}" style="width: 30%; height: 30%;"></img></a>'
-			text = text.replace(url, img_tag)
+			text = text.replace(f'<a href="{url}">{url}</a>', img_tag)
 		
 		return text
