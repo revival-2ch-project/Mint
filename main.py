@@ -73,7 +73,7 @@ async def hello():
 @quart_app.route("/")
 async def topPage():
 	async with quart_app.db_pool.acquire() as connection:
-		bbses = await connection.fetch("SELECT bbs_name FROM bbs")
+		bbses = await connection.fetch("SELECT * FROM bbs")
 		host = request.host
 		return await render_template("index.html",
 								bbses=bbses,
