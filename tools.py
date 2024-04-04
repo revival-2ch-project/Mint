@@ -89,12 +89,12 @@ class BBSTools():
 
 	def convert_image_link(text):
 		# 正規表現を使用して画像リンクを抽出
-		url_pattern = r'(https?://\S+\.(?:png|jpg|jpeg|gif|webp|apng))'  # 画像リンクのパターン
+		url_pattern = r'(https?://\S+\.(?:png|jpg|jpeg|gif|webp|apng))(?=\s|\"|\')'  # 画像リンクのパターン
 		urls = re.findall(url_pattern, text)
-		
+
 		# 抽出した画像リンクを<img>タグで置換して返す
 		for url in urls:
-			img_tag = f'<a href="{url}" data-lightbox="group"><img src="{url}" style="width: 30%; height: 30%;"></img></a>'
+			img_tag = f'<a href="{url}" data-lightbox="group"><img src="{url}" style="width: 15%; height: 15%;"></img></a>'
 			text = text.replace(f'<a href="{url}">{url}</a>', img_tag)
 		
 		return text
