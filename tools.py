@@ -72,7 +72,7 @@ class BBSTools():
 		
 		# 抽出したURLを<a>タグで置換して返す
 		for url in urls:
-			text = text.replace(url, f'<a href="{url}">{url}</a>', 1)
+			text = re.sub(re.escape(url), f'<a href="{url}">{url}</a>', text)
 		
 		return text
 
