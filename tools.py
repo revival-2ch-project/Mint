@@ -94,10 +94,13 @@ class BBSTools():
 
 		# 抽出した画像リンクを<img>タグで置換して返す
 		for url in urls:
-			img_tag = f'<a href="{url}" data-lightbox="group"><img src="{url}" style="width: 15%; height: 15%;"></img></a>'
+			img_tag = f'<a href="{url}" data-lightbox="group"><img src="{url}" style="width: 30%; height: 30%;"></img></a>'
 			text = text.replace(f'<a href="{url}">{url}</a>', img_tag)
 		
 		return text
+
+	def remove_query_parameters(url):
+		return re.sub(r'\?.*$', '', url)
 
 	def convert_video_url(text):
 		# 正規表現を使用して画像リンクを抽出
@@ -118,4 +121,14 @@ class BBSTools():
 			img_tag = f'<iframe width="482" height="271" src="https://www.youtube.com/embed/{url}" title="Mint Youtube Embed" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>'
 			text = text.replace(f'<a href="https://youtu.be/{url}">https://youtu.be/{url}</a>', img_tag)
 		
+		# 正規表現を使用して画像リンクを抽出
+		url_pattern = r'<a href="https://www.nicovideo.jp/watch/(.*)">.*</a>'  # 画像リンクのパターン
+		urls = re.findall(url_pattern, text)
+
+		# 抽出した画像リンクを置換して返す
+		for url in urls:
+			url = BBSTools.remove_query_parameters(url)
+			img_tag = f'<script type="application/javascript" src="https://embed.nicovideo.jp/watch/{url}/script?w=320&h=180"></script><noscript><a href="https://www.nicovideo.jp/watch/{url}">Mint NND Embed</a></noscript>'
+			text = text.replace(f'<a href="https://www.nicovideo.jp/watch/{url}">https://www.nicovideo.jp/watch/{url}</a>', img_tag)
+
 		return text
