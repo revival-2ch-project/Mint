@@ -67,7 +67,7 @@ class BBSTools():
 
 	def convert_to_link(text):
 		# 正規表現を使用してURLを抽出
-		url_pattern = r'https?://\S+?(?!\.png)(?!\.jpg)(?!\.jpeg)(?!\.gif)(?!\.webp)(?!\.apng)'
+		url_pattern = r'https?://\S+(?!\.png)(?!\.jpg)(?!\.jpeg)(?!\.gif)(?!\.webp)(?!\.apng)'
 		urls = re.findall(url_pattern, text)
 		
 		# 抽出したURLを<a>タグで置換して返す
@@ -78,7 +78,7 @@ class BBSTools():
 
 	def convert_res_anker(text):
 		# 正規表現を使用してレスポンスへのリンクを抽出
-		url_pattern = r'&gt;&gt;(\d+?)'
+		url_pattern = r'&gt;&gt;(\d+)'
 		urls = re.findall(url_pattern, text)
 		
 		# 抽出したリンクを<a>タグで置換して返す
@@ -89,7 +89,7 @@ class BBSTools():
 
 	def convert_image_link(text):
 		# 正規表現を使用して画像リンクを抽出
-		url_pattern = r'(https?://\S+?\.(?:png|jpg|jpeg|gif|webp|apng))(?=\s|\"|\')'  # 画像リンクのパターン
+		url_pattern = r'(https?://\S+\.(?:png|jpg|jpeg|gif|webp|apng))(?=\s|\"|\')'  # 画像リンクのパターン
 		urls = re.findall(url_pattern, text)
 
 		# 抽出した画像リンクを<img>タグで置換して返す
@@ -101,7 +101,7 @@ class BBSTools():
 
 	def convert_video_url(text):
 		# 正規表現を使用して画像リンクを抽出
-		url_pattern = r'<a href="https://www.youtube.com/watch\?v=(.*?)">.*?</a>'  # 画像リンクのパターン
+		url_pattern = r'<a href="https://www.youtube.com/watch\?v=(.*)">.*</a>'  # 画像リンクのパターン
 		urls = re.findall(url_pattern, text)
 
 		# 抽出した画像リンクを置換して返す
@@ -110,7 +110,7 @@ class BBSTools():
 			text = text.replace(f'<a href="https://www.youtube.com/watch?v={url}">https://www.youtube.com/watch?v={url}</a>', img_tag)
 
 		# 正規表現を使用して画像リンクを抽出
-		url_pattern = r'<a href="https://youtu.be/(.*?)">.*?</a>'  # 画像リンクのパターン
+		url_pattern = r'<a href="https://youtu.be/(.*)">.*</a>'  # 画像リンクのパターン
 		urls = re.findall(url_pattern, text)
 
 		# 抽出した画像リンクを置換して返す
@@ -119,7 +119,7 @@ class BBSTools():
 			text = text.replace(f'<a href="https://youtu.be/{url}">https://youtu.be/{url}</a>', img_tag)
 		
 		# 正規表現を使用して画像リンクを抽出
-		url_pattern = r'<a href="https://www.nicovideo.jp/watch/([^?"]+?)">.*?</a>'  # 画像リンクのパターン
+		url_pattern = r'<a href="https://www.nicovideo.jp/watch/([^?"]+)">.*</a>'  # 画像リンクのパターン
 		urls = re.findall(url_pattern, text)
 
 		# 抽出した画像リンクを置換して返す
