@@ -269,13 +269,13 @@ async def write():
 			return await sjis_error("メール欄の文字数が長すぎます！")
 		else:
 			return await render_template("kakikomi_Error.html", message="メール欄の文字数が長すぎます！")
-	if len(content) > 512:
+	if len(content) > 1024:
 		if if_utf8 is None:
 			return await sjis_error("本文の文字数が長すぎます！")
 		else:
 			return await render_template("kakikomi_Error.html", message="本文の文字数が長すぎます！")
 	
-	if content.count("\n") > 15:
+	if content.count("\n") > 30:
 		if if_utf8 is None:
 			return await sjis_error("改行が多すぎます！")
 		else:
@@ -330,7 +330,7 @@ async def write():
 				'message': 'thread_writed',
 				'name': lastName,
 				'mail': mail,
-				'content': BBSTools.convert_video_url(BBSTools.convert_image_link(BBSTools.convert_res_anker(BBSTools.convert_to_link(content)))),
+				'content': BBSTools.aa_okikae(BBSTools.convert_video_url(BBSTools.convert_image_link(BBSTools.convert_res_anker(BBSTools.convert_to_link(content))))),
 				'date': date.strftime("%Y/%m/%d(%a) %H:%M:%S.%f"),
 				"id": id,
 				"count": 1
@@ -392,7 +392,7 @@ async def write():
 				'message': 'thread_writed',
 				'name': lastName,
 				'mail': mail,
-				'content': BBSTools.convert_video_url(BBSTools.convert_image_link(BBSTools.convert_res_anker(BBSTools.convert_to_link(content)))),
+				'content': BBSTools.aa_okikae(BBSTools.convert_video_url(BBSTools.convert_image_link(BBSTools.convert_res_anker(BBSTools.convert_to_link(content))))),
 				'date': date.strftime("%Y/%m/%d(%a) %H:%M:%S.%f"),
 				"id": id,
 				"count": count
@@ -475,7 +475,7 @@ async def threadDat(bbs: str, key: int):
 		for i, v in enumerate(res_data.get("data", [])):
 			res_data["data"][i]["date"] = datetime.fromtimestamp(v["date"]).strftime("%Y/%m/%d(%a) %H:%M:%S.%f")
 			res_data["data"][i]["content"] = res_data["data"][i]["content"].replace("\r\n"," <br> ").replace("\n"," <br> ").replace("\r"," <br> ")
-			res_data["data"][i]["content"] = BBSTools.convert_to_link(res_data["data"][i]["content"])
+			res_data["data"][i]["content"] = res_data["data"][i]["content"]
 			if i == 0:
 				ress.append(f'{res_data["data"][i]["name"]}<>{res_data["data"][i]["mail"]}<>{res_data["data"][i]["date"]} ID: {res_data["data"][i]["id"]}<>{res_data["data"][i]["content"]}<>{values["title"]}')
 			else:
@@ -497,7 +497,7 @@ async def threadPage(bbs: str, key: int):
 		for i, v in enumerate(res_data.get("data", [])):
 			res_data["data"][i]["date"] = datetime.fromtimestamp(v["date"]).strftime("%Y/%m/%d(%a) %H:%M:%S.%f")
 			res_data["data"][i]["content"] = res_data["data"][i]["content"].replace("\r\n"," <br> ").replace("\n"," <br> ").replace("\r"," <br> ")
-			res_data["data"][i]["content"] = BBSTools.convert_video_url(BBSTools.convert_image_link(BBSTools.convert_res_anker(BBSTools.convert_to_link(res_data["data"][i]["content"]))))
+			res_data["data"][i]["content"] = BBSTools.aa_okikae(BBSTools.convert_video_url(BBSTools.convert_image_link(BBSTools.convert_res_anker(BBSTools.convert_to_link(res_data["data"][i]["content"])))))
 		host = request.host
 		return await render_template(
 			"thread_view.html",

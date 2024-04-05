@@ -152,3 +152,6 @@ class BBSTools():
 			text = text.replace(f'<a href="{url}">{url}</a>', img_tag)
 		
 		return text
+
+	def aa_okikae(text):
+		return text.replace("&lt;aa&gt;","<div class=\"Saitamaar\">").replace("&lt;/aa&gt;","</div>")
