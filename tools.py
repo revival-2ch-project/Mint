@@ -103,35 +103,52 @@ class BBSTools():
 		return re.sub(r'\?.*$', '', url)
 
 	def convert_video_url(text):
-		# 正規表現を使用して画像リンクを抽出
-		url_pattern = r'<a href="https://www.youtube.com/watch\?v=(.*)">.*</a>'  # 画像リンクのパターン
+		# 正規表現を使用してYoutubeのリンクを抽出
+		url_pattern = r'<a href="https://www.youtube.com/watch\?v=(.*)">.*</a>'  # リンクのパターン
 		urls = re.findall(url_pattern, text)
 
-		# 抽出した画像リンクを置換して返す
+		# 抽出したYoutubeのリンクを置換して返す
 		for url in urls:
 			img_tag = f'<iframe width="482" height="271" src="https://www.youtube.com/embed/{url}" title="Mint Youtube Embed" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>'
 			text = text.replace(f'<a href="https://www.youtube.com/watch?v={url}">https://www.youtube.com/watch?v={url}</a>', img_tag)
 
-		# 正規表現を使用して画像リンクを抽出
-		url_pattern = r'<a href="https://youtu.be/(.*)">.*</a>'  # 画像リンクのパターン
+		# 正規表現を使用してYoutubeのリンクを抽出
+		url_pattern = r'<a href="https://youtu.be/(.*)">.*</a>'  # リンクのパターン
 		urls = re.findall(url_pattern, text)
 
-		# 抽出した画像リンクを置換して返す
+		# 抽出したYoutubeのリンクを置換して返す
 		for url in urls:
 			img_tag = f'<iframe width="482" height="271" src="https://www.youtube.com/embed/{url}" title="Mint Youtube Embed" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>'
 			text = text.replace(f'<a href="https://youtu.be/{url}">https://youtu.be/{url}</a>', img_tag)
 		
-		# 正規表現を使用して画像リンクを抽出
-		url_pattern = r'<a href="https://www.nicovideo.jp/watch/(.*)">.*</a>'  # 画像リンクのパターン
+		# 正規表現を使用してニコニコ動画のURLを抽出
+		url_pattern = r'<a href="https://www.nicovideo.jp/watch/(.*)">.*</a>'  # リンクのパターン
 		urls = re.findall(url_pattern, text)
 
-		# 抽出した画像リンクを置換して返す
+		# 抽出したニコ動のリンクを置換して返す
 		for url in urls:
 			rawurl = url
 			url = BBSTools.remove_query_parameters(url)
-			print(url)
 			embed_url = f'https://embed.nicovideo.jp/watch/{url}/script'
-			img_tag = f'<script type="application/javascript" src="{embed_url}" data-width="320" data-height="180"></script><noscript><a href="https://www.nicovideo.jp/watch/{url}">Mint NND Embed</a></noscript>'
+			img_tag = f'<script type="application/javascript" src="{embed_url}" data-width="482" data-height="271"></script><noscript><a href="https://www.nicovideo.jp/watch/{url}">Mint NND Embed</a></noscript>'
 			text = text.replace(f'<a href="https://www.nicovideo.jp/watch/{rawurl}">https://www.nicovideo.jp/watch/{rawurl}</a>', img_tag)
 
+		# 正規表現を使用して画像リンクを抽出
+		url_pattern = r'(https?://\S+\.(?:mp3|wav|ogg))(?=\s|\"|\')'  # リンクのパターン
+		urls = re.findall(url_pattern, text)
+
+		# 抽出した画像リンクを<audio>タグで置換して返す
+		for url in urls:
+			img_tag = f'<audio src="{url}" controls></audio>'
+			text = text.replace(f'<a href="{url}">{url}</a>', img_tag)
+
+		# 正規表現を使用して画像リンクを抽出
+		url_pattern = r'(https?://\S+\.(?:mp4|avi|mov|wmv|flv|webm|mkv))(?=\s|\"|\')'  # 画像リンクのパターン
+		urls = re.findall(url_pattern, text)
+
+		# 抽出した画像リンクを<video>タグで置換して返す
+		for url in urls:
+			img_tag = f'<video style="width: 482; height: 271;" src="{url}" controls></video>'
+			text = text.replace(f'<a href="{url}">{url}</a>', img_tag)
+		
 		return text
