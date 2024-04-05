@@ -457,6 +457,7 @@ async def rss_feed(bbs: str):
 		data = json.loads(thread["data"])
 		item.description(data["data"][0]["content"])
 		item.link(href=f'{settings.get("ssloption","https")}://{request.host}/test/read.cgi/{bbs}/{thread["id"]}/')
+		item.published(thread['created_at'])
 	content = feed.rss_str(pretty=True)
 	response = await make_response(content)
 	response.content_type = "application/rss+xml charset=utf-8"
