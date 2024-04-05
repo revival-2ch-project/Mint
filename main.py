@@ -20,6 +20,8 @@ import feedgen.feed
 import urllib.parse
 import mimetypes
 
+print("Mint 準備中")
+
 rentoukisei = defaultdict(lambda: int((datetime.now() + settings.get("timezone", timedelta(hours=0))).timestamp()) - 10)
 room_count = defaultdict(lambda: 0)
 global_count = 0
@@ -559,3 +561,5 @@ async def join_room(sid, room):
 	await sio.emit('count_event', {'message': 'client connected', 'clients': room_count[room]}, room=room)
 	print('joinned', room)
 	print('connected member count', room_count[room])
+
+print("Mint 起動します")

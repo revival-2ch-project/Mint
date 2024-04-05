@@ -99,6 +99,9 @@ class BBSTools():
 		
 		return text
 
+	def remove_query_parameters(url):
+		return re.sub(r'\?.*$', '', url)
+
 	def convert_video_url(text):
 		# 正規表現を使用して画像リンクを抽出
 		url_pattern = r'<a href="https://www.youtube.com/watch\?v=(.*)">.*</a>'  # 画像リンクのパターン
@@ -119,12 +122,16 @@ class BBSTools():
 			text = text.replace(f'<a href="https://youtu.be/{url}">https://youtu.be/{url}</a>', img_tag)
 		
 		# 正規表現を使用して画像リンクを抽出
-		url_pattern = r'<a href="https://www.nicovideo.jp/watch/([^"]+)">.*</a>'  # 画像リンクのパターン
+		url_pattern = r'<a href="https://www.nicovideo.jp/watch/(.*)">.*</a>'  # 画像リンクのパターン
 		urls = re.findall(url_pattern, text)
 
 		# 抽出した画像リンクを置換して返す
 		for url in urls:
-			img_tag = f'<script type="application/javascript" src="https://embed.nicovideo.jp/watch/{url}/script?w=320&h=180"></script><noscript><a href="https://www.nicovideo.jp/watch/{url}">Mint NND Embed</a></noscript>'
-			text = text.replace(f'<a href="https://www.nicovideo.jp/watch/{url}">https://www.nicovideo.jp/watch/{url}</a>', img_tag)
+			rawurl = url
+			url = BBSTools.remove_query_parameters(url)
+			print(url)
+			embed_url = f'https://embed.nicovideo.jp/watch/{url}/script'
+			img_tag = f'<script type="application/javascript" src="{embed_url}" data-width="320" data-height="180"></script><noscript><a href="https://www.nicovideo.jp/watch/{url}">Mint NND Embed</a></noscript>'
+			text = text.replace(f'<a href="https://www.nicovideo.jp/watch/{rawurl}">https://www.nicovideo.jp/watch/{rawurl}</a>', img_tag)
 
 		return text
