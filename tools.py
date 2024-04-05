@@ -119,7 +119,7 @@ class BBSTools():
 			text = text.replace(f'<a href="https://youtu.be/{url}">https://youtu.be/{url}</a>', img_tag)
 		
 		# 正規表現を使用して画像リンクを抽出
-		url_pattern = r'<a href="https://www.nicovideo.jp/watch/([^?"]+)">.*</a>'  # 画像リンクのパターン
+		url_pattern = r'<a href="https://www.nicovideo.jp/watch/([^"]+)">.*</a>'  # 画像リンクのパターン
 		urls = re.findall(url_pattern, text)
 
 		# 抽出した画像リンクを置換して返す
