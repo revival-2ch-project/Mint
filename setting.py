@@ -14,7 +14,7 @@ settings = {
 		"<Enter Kisei Words>",
 	],
 	"timezone":  datetime.timedelta(hours=9),
-	"ssloption": "https",
+	"ssloption": "wss",
 }
 
 # Mint Version Info. Please do not rewrite!

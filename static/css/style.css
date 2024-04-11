@@ -91,3 +91,19 @@
 	font-size: 16px;
 	line-height: 18px;
 }
+
+.center {
+	text-align: center;
+}
+
+.setting_description {
+	padding: 10px;
+	border: 0px solid;
+	border-radius: 10px;
+	background-color: var(--bs-tertiary-bg);
+	font-size: 15px;
+}
+
+.setting_gui {
+	padding: 20px;
+}

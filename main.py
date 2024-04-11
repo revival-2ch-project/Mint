@@ -97,6 +97,53 @@ async def img(filename):
 	response.content_type = mime_type
 	return response
 
+@quart_app.route('/sounds/<path:filename>')
+async def sounds(filename):
+	response = await send_from_directory('./static/sounds/', filename)
+	mime_type, _ = mimetypes.guess_type(f'./static/sounds/{filename}')
+	response.content_type = mime_type
+	return response
+
+@quart_app.route('/js/<path:filename>')
+async def js(filename):
+	response = await send_from_directory('./static/js/', filename)
+	mime_type, _ = mimetypes.guess_type(f'./static/js/{filename}')
+	response.content_type = mime_type
+	return response
+
+@quart_app.route('/settings')
+async def setting_menu():
+	host = request.host
+	return await render_template("setting.html",
+							  settings=settings,
+							  ver=mintverinfo,
+							  host=host,
+							)
+
+@quart_app.route("/setting-save", methods=["POST"])
+async def setting_save():
+	data = await request.get_data()
+
+	# URLエンコードされたデータを辞書に変換
+	post_data_dict = {}
+	for pair in data.decode().split('&'):
+		key, value = pair.split('=')
+		key = urllib.parse.unquote(key)
+		value = urllib.parse.unquote(value.replace("+", " "))
+		if key in post_data_dict:
+			if isinstance(post_data_dict[key], list):
+				post_data_dict[key].append(value)
+			else:
+				post_data_dict[key] = [post_data_dict[key], value]
+		else:
+			post_data_dict[key] = value
+	print(post_data_dict)
+	json_data = json.dumps(post_data_dict, ensure_ascii=False)
+	print(json_data)
+	response = await make_response("設定を保存した。")
+	response.set_cookie("settings", value=json_data, expires=int(datetime.now().timestamp()) + 60*60*24*365*10)
+	return response
+
 def sort_by_views(thread):
 	return room_count.get(f'{thread.get("bbs_id","")}_{thread.get("id",0)}',0)
 
@@ -110,6 +157,8 @@ async def bbsPage(bbs: str):
 		anonymous_name = await connection.fetchval("SELECT anonymous_name FROM bbs WHERE id = $1", bbs)
 		description = await connection.fetchval("SELECT description FROM bbs WHERE id = $1", bbs)
 		raw_threads = await connection.fetch("SELECT * FROM threads WHERE bbs_id = $1 ORDER BY last_write_time DESC", bbs)
+	if bbs_name is None:
+		return "404 not found", 404
 	threads = [record_to_dict(record) for record in raw_threads]
 	if request.args.get('sort', 'normal') == "viewers":
 		threads = sorted(threads, key=sort_by_views, reverse=True)
