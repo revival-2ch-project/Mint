@@ -4,6 +4,7 @@ Mintのメインソースコード
 
 # まずライブラリのインポート(Quart, asyncpg, os)
 from quart import Quart, render_template, send_from_directory, request, Response, make_response
+from jinja2.ext import loopcontrols
 import asyncpg
 import os
 from tools import BBSTools
@@ -24,7 +25,9 @@ print("Mint 準備中")
 
 rentoukisei = defaultdict(lambda: int((datetime.now() + settings.get("timezone", timedelta(hours=0))).timestamp()) - 10)
 room_count = defaultdict(lambda: 0)
+room_list = defaultdict(lambda: {})
 global_count = 0
+global_list = {}
 
 # .envがあった場合、優先的にロード
 if os.path.isfile(".env"):
@@ -40,6 +43,7 @@ sio = socketio.AsyncServer(async_mode='asgi')
 app = socketio.ASGIApp(sio, quart_app)
 
 quart_app.jinja_env.filters['encode_sjis'] = lambda u: codecs.encode(str(u), 'shift_jis')
+quart_app.jinja_env.add_extension(loopcontrols)
 
 if os.getenv("debug") == "TRUE":
 	quart_app.debug = True
@@ -77,11 +81,25 @@ async def topPage():
 	async with quart_app.db_pool.acquire() as connection:
 		bbses = await connection.fetch("SELECT * FROM bbs")
 		host = request.host
+
+		settings = json.loads(request.cookies.get('settings'))
+		notification_server_select = settings.get('notification_server_select', "ws")
+		playsoundOnThread = settings.get('playsoundOnThread', "on")
+		thumbnail_in_thread = settings.get('thumbnail_in_thread', "on")
+		id_ng = settings.get('id_ng', [])
+		word_ng = settings.get('word_ng', [])
+		ngword_select = settings.get('ngword_select', "mask")
 		return await render_template("index.html",
 								bbses=bbses,
 								settings=settings,
 								ver=mintverinfo,
 								host=host,
+								notification_server_select=notification_server_select,
+								playsoundOnThread=playsoundOnThread,
+								thumbnail_in_thread=thumbnail_in_thread,
+								id_ng=id_ng,
+								word_ng=word_ng,
+								ngword_select=ngword_select,
 							)
 
 @quart_app.route('/css/<path:filename>')
@@ -114,10 +132,23 @@ async def js(filename):
 @quart_app.route('/settings')
 async def setting_menu():
 	host = request.host
+	settings = json.loads(request.cookies.get('settings'))
+	notification_server_select = settings.get('notification_server_select', "ws")
+	playsoundOnThread = settings.get('playsoundOnThread', "on")
+	thumbnail_in_thread = settings.get('thumbnail_in_thread', "on")
+	id_ng = settings.get('id_ng', [])
+	word_ng = settings.get('word_ng', [])
+	ngword_select = settings.get('ngword_select', "mask")
 	return await render_template("setting.html",
 							  settings=settings,
 							  ver=mintverinfo,
 							  host=host,
+							  notification_server_select=notification_server_select,
+							  playsoundOnThread=playsoundOnThread,
+							  thumbnail_in_thread=thumbnail_in_thread,
+							  id_ng=id_ng,
+							  word_ng=word_ng,
+							  ngword_select=ngword_select,
 							)
 
 @quart_app.route("/setting-save", methods=["POST"])
@@ -130,17 +161,18 @@ async def setting_save():
 		key, value = pair.split('=')
 		key = urllib.parse.unquote(key)
 		value = urllib.parse.unquote(value.replace("+", " "))
-		if key in post_data_dict:
-			if isinstance(post_data_dict[key], list):
-				post_data_dict[key].append(value)
-			else:
-				post_data_dict[key] = [post_data_dict[key], value]
+		if key == "id_ng" or key == "word_ng":
+			if value != "":
+				if isinstance(post_data_dict.get(key), list):
+					post_data_dict[key].append(value)
+				else:
+					post_data_dict[key] = [value]
 		else:
 			post_data_dict[key] = value
 	print(post_data_dict)
 	json_data = json.dumps(post_data_dict, ensure_ascii=False)
 	print(json_data)
-	response = await make_response("設定を保存した。")
+	response = await make_response("設定を保存しました。")
 	response.set_cookie("settings", value=json_data, expires=int(datetime.now().timestamp()) + 60*60*24*365*10)
 	return response
 
@@ -172,6 +204,14 @@ async def bbsPage(bbs: str):
 	threads_one = threads[:mid]
 	threads_two = threads[mid:]
 	host = request.host
+
+	settings = json.loads(request.cookies.get('settings'))
+	notification_server_select = settings.get('notification_server_select', "ws")
+	playsoundOnThread = settings.get('playsoundOnThread', "on")
+	thumbnail_in_thread = settings.get('thumbnail_in_thread', "on")
+	id_ng = settings.get('id_ng', [])
+	word_ng = settings.get('word_ng', [])
+	ngword_select = settings.get('ngword_select', "mask")
 	return await render_template("bbsPage.html",
 							  bbs_name=bbs_name,
 							  description=description,
@@ -182,6 +222,12 @@ async def bbsPage(bbs: str):
 							  settings=settings,
 							  ver=mintverinfo,
 							  host=host,
+							  notification_server_select=notification_server_select,
+							  playsoundOnThread=playsoundOnThread,
+							  thumbnail_in_thread=thumbnail_in_thread,
+							  id_ng=id_ng,
+							  word_ng=word_ng,
+							  ngword_select=ngword_select,
 				 )
 
 def convert_to_utf8(data):
@@ -379,7 +425,7 @@ async def write():
 				'message': 'thread_writed',
 				'name': lastName,
 				'mail': mail,
-				'content': BBSTools.aa_okikae(BBSTools.convert_video_url(BBSTools.convert_image_link(BBSTools.convert_res_anker(BBSTools.convert_to_link(content))))),
+				'content': BBSTools.aa_okikae(BBSTools.convert_video_url(BBSTools.convert_res_anker(BBSTools.convert_to_link(content)))),
 				'date': date.strftime("%Y/%m/%d(%a) %H:%M:%S.%f"),
 				"id": id,
 				"count": 1
@@ -441,7 +487,7 @@ async def write():
 				'message': 'thread_writed',
 				'name': lastName,
 				'mail': mail,
-				'content': BBSTools.aa_okikae(BBSTools.convert_video_url(BBSTools.convert_image_link(BBSTools.convert_res_anker(BBSTools.convert_to_link(content))))),
+				'content': BBSTools.aa_okikae(BBSTools.convert_video_url(BBSTools.convert_res_anker(BBSTools.convert_to_link(content)))),
 				'date': date.strftime("%Y/%m/%d(%a) %H:%M:%S.%f"),
 				"id": id,
 				"count": count
@@ -543,10 +589,39 @@ async def threadPage(bbs: str, key: int):
 		if values is None:
 			return "Thread not found", 404  # スレッドが見つからない場合は404エラーを返すなどの処理を行う
 		res_data = json.loads(values["data"])
+
+		settings = json.loads(request.cookies.get('settings'))
+		notification_server_select = settings.get('notification_server_select', "ws")
+		playsoundOnThread = settings.get('playsoundOnThread', "on")
+		thumbnail_in_thread = settings.get('thumbnail_in_thread', "on")
+		id_ng = settings.get('id_ng', [])
+		word_ng = settings.get('word_ng', [])
+		ngword_select = settings.get('ngword_select', "mask")
+
+		print(thumbnail_in_thread)
+		print(bool(thumbnail_in_thread))
+
 		for i, v in enumerate(res_data.get("data", [])):
 			res_data["data"][i]["date"] = datetime.fromtimestamp(v["date"]).strftime("%Y/%m/%d(%a) %H:%M:%S.%f")
 			res_data["data"][i]["content"] = res_data["data"][i]["content"].replace("\r\n"," <br> ").replace("\n"," <br> ").replace("\r"," <br> ")
-			res_data["data"][i]["content"] = BBSTools.aa_okikae(BBSTools.convert_video_url(BBSTools.convert_image_link(BBSTools.convert_res_anker(BBSTools.convert_to_link(res_data["data"][i]["content"])))))
+			res_data["data"][i]["content"] = BBSTools.aa_okikae(
+												BBSTools.convert_video_url(
+													BBSTools.convert_image_link(
+														BBSTools.convert_res_anker(
+															BBSTools.convert_to_link(res_data["data"][i]["content"]),
+														),
+														BBSTools.to_bool(thumbnail_in_thread)
+													)
+												)
+											)
+
+			if ngword_select == "mask":
+				for word in word_ng:
+					a = ""
+					for _ in range(len(word)):
+						a = f"{a}*"
+					res_data["data"][i]["name"] = res_data["data"][i]["name"].replace(word, a)
+					res_data["data"][i]["content"] = res_data["data"][i]["content"].replace(word, a)
 		host = request.host
 		return await render_template(
 			"thread_view.html",
@@ -559,6 +634,12 @@ async def threadPage(bbs: str, key: int):
 			ver=mintverinfo,
 			host=host,
 			description=res_data["data"][0]["content"],
+			notification_server_select=notification_server_select,
+			playsoundOnThread=playsoundOnThread,
+			thumbnail_in_thread=thumbnail_in_thread,
+			id_ng=id_ng,
+			word_ng=word_ng,
+			ngword_select=ngword_select,
 		)
 
 @quart_app.errorhandler(404)
@@ -570,7 +651,13 @@ def page_not_found(error):
 @sio.event
 async def connect(sid, environ, auth):
 	global global_count
-	global_count += 1
+	global global_list
+	if global_list.get(environ['REMOTE_ADDR'], None) == None:
+		global_list[environ['REMOTE_ADDR']] = sid
+		global_count += 1
+	else:
+		global_list["tajuu"] = sid
+		print("not count it's 多重接続 (global)")
 	await sio.emit('global_count_event', {'message': 'client connected', 'global_count': global_count})
 	print(f'connected', sid)
 	print('connected member count', global_count)
@@ -596,20 +683,44 @@ def get_sid_rooms(sid):
 @sio.event
 async def disconnect(sid):
 	global global_count
-	global_count -= 1
+	global global_list
+	for key,value in global_list.items():
+		if value == sid:
+			if key == "tajuu":
+				a = None
+			else:
+				global_count -= 1
+	for key,value in global_list.items():
+		if value == sid:
+			del global_list[key]
 	await sio.emit('global_count_event', {'message': 'client disconnected', 'global_count': global_count})
 	for room in get_sid_rooms(sid):
-		room_count[room] -= 1
+		for key,value in room_list.items():
+			if value == sid:
+				if key != "tajuu":
+					room_count[room] -= 1
+					del room_list[key]
 		await sio.emit('count_event', {'message': 'client disconnected', 'clients': room_count[room]}, room=room)
 	print('disconnected', sid)
 	print('connected member count', global_count)
 
 @sio.event
 async def join_room(sid, room):
+	ipaddr = None  # 初期化
 	await sio.enter_room(sid, room)
-	room_count[room] += 1
+	for key, value in global_list.items():
+		if value == sid:
+			ipaddr = key
+			break
+	print(ipaddr)
+	if room_list.get(ipaddr, None) is None and ipaddr != "tajuu":
+		room_list[ipaddr] = sid
+		room_count[room] += 1
+	else:
+		room_list["tajuu"] = sid
+		print("not count it's 多重接続 (room)")
 	await sio.emit('count_event', {'message': 'client connected', 'clients': room_count[room]}, room=room)
-	print('joinned', room)
+	print('joined', room)
 	print('connected member count', room_count[room])
 
 print("Mint 起動します")

@@ -87,14 +87,17 @@ class BBSTools():
 		
 		return text
 
-	def convert_image_link(text):
+	def convert_image_link(text, flag = False):
 		# 正規表現を使用して画像リンクを抽出
 		url_pattern = r'(https?://\S+\.(?:png|jpg|jpeg|gif|webp|apng))(?=\s|\"|\')'  # 画像リンクのパターン
 		urls = re.findall(url_pattern, text)
 
 		# 抽出した画像リンクを<img>タグで置換して返す
 		for url in urls:
-			img_tag = f'<a href="{url}" data-lightbox="group"><img src="{url}" style="width: 30%; height: 30%;"></img></a>'
+			if flag == False:
+				img_tag = f'<a href="{url}" data-lightbox="group">{url}</a>'
+			else:
+				img_tag = f'<a href="{url}" data-lightbox="group"><img src="{url}" style="width: 30%; height: 30%;" loading="lazy"></img></a>'
 			text = text.replace(f'<a href="{url}">{url}</a>', img_tag)
 		
 		return text
@@ -109,7 +112,7 @@ class BBSTools():
 
 		# 抽出したYoutubeのリンクを置換して返す
 		for url in urls:
-			img_tag = f'<iframe width="482" height="271" src="https://www.youtube.com/embed/{url}" title="Mint Youtube Embed" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>'
+			img_tag = f'<iframe width="482" height="271" src="https://www.youtube.com/embed/{url}" loading="lazy" title="Mint Youtube Embed" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>'
 			text = text.replace(f'<a href="https://www.youtube.com/watch?v={url}">https://www.youtube.com/watch?v={url}</a>', img_tag)
 
 		# 正規表現を使用してYoutubeのリンクを抽出
@@ -118,7 +121,7 @@ class BBSTools():
 
 		# 抽出したYoutubeのリンクを置換して返す
 		for url in urls:
-			img_tag = f'<iframe width="482" height="271" src="https://www.youtube.com/embed/{url}" title="Mint Youtube Embed" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>'
+			img_tag = f'<iframe width="482" height="271" src="https://www.youtube.com/embed/{url}" loading="lazy" title="Mint Youtube Embed" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>'
 			text = text.replace(f'<a href="https://youtu.be/{url}">https://youtu.be/{url}</a>', img_tag)
 		
 		# 正規表現を使用してニコニコ動画のURLを抽出
@@ -130,7 +133,7 @@ class BBSTools():
 			rawurl = url
 			url = BBSTools.remove_query_parameters(url)
 			embed_url = f'https://embed.nicovideo.jp/watch/{url}/script'
-			img_tag = f'<script type="application/javascript" src="{embed_url}" data-width="482" data-height="271"></script><noscript><a href="https://www.nicovideo.jp/watch/{url}">Mint NND Embed</a></noscript>'
+			img_tag = f'<script type="application/javascript" src="{embed_url}" loading="lazy" data-width="482" data-height="271"></script><noscript><a href="https://www.nicovideo.jp/watch/{url}">Mint NND Embed</a></noscript>'
 			text = text.replace(f'<a href="https://www.nicovideo.jp/watch/{rawurl}">https://www.nicovideo.jp/watch/{rawurl}</a>', img_tag)
 
 		# 正規表現を使用して画像リンクを抽出
@@ -139,7 +142,7 @@ class BBSTools():
 
 		# 抽出した画像リンクを<audio>タグで置換して返す
 		for url in urls:
-			img_tag = f'<audio src="{url}" controls></audio>'
+			img_tag = f'<audio src="{url}" loading="lazy" controls></audio>'
 			text = text.replace(f'<a href="{url}">{url}</a>', img_tag)
 
 		# 正規表現を使用して画像リンクを抽出
@@ -148,10 +151,13 @@ class BBSTools():
 
 		# 抽出した画像リンクを<video>タグで置換して返す
 		for url in urls:
-			img_tag = f'<video style="width: 482; height: 271;" src="{url}" controls></video>'
+			img_tag = f'<video style="width: 482; height: 271;" src="{url}" loading="lazy" controls></video>'
 			text = text.replace(f'<a href="{url}">{url}</a>', img_tag)
 		
 		return text
 
 	def aa_okikae(text):
 		return text.replace("&lt;aa&gt;","<div class=\"Saitamaar\">").replace("&lt;/aa&gt;","</div>")
+
+	def to_bool(s):
+		return s.lower() in ["true", "t", "yes", "1", "on"]
