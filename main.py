@@ -684,18 +684,18 @@ def get_sid_rooms(sid):
 async def disconnect(sid):
 	global global_count
 	global global_list
-	for key,value in global_list.items():
+	for key,value in list(global_list.items()):
 		if value == sid:
 			if key == "tajuu":
 				a = None
 			else:
 				global_count -= 1
-	for key,value in global_list.items():
+	for key,value in list(global_list.items()):
 		if value == sid:
 			del global_list[key]
 	await sio.emit('global_count_event', {'message': 'client disconnected', 'global_count': global_count})
 	for room in get_sid_rooms(sid):
-		for key,value in room_list.items():
+		for key,value in list(room_list.items()):
 			if value == sid:
 				if key != "tajuu":
 					room_count[room] -= 1
@@ -708,7 +708,7 @@ async def disconnect(sid):
 async def join_room(sid, room):
 	ipaddr = None  # 初期化
 	await sio.enter_room(sid, room)
-	for key, value in global_list.items():
+	for key, value in list(global_list.items()):
 		if value == sid:
 			ipaddr = key
 			break
