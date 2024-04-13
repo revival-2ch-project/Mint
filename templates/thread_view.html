@@ -112,7 +112,7 @@
 
 				socket.on('thread_writed', (data) => {
 					console.log('Received thread_writed:', data);
-					{% if playsoundOnThread %}
+					{% if playsoundOnThread == "on" %}
 					// AudioContextを作成
 					let AudioContext = window.AudioContext || window.webkitAudioContext || window.mozAudioContext || window.oAudioContext || window.msAudioContext;
 					let audioContext = new AudioContext();

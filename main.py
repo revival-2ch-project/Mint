@@ -25,9 +25,7 @@ print("Mint 準備中")
 
 rentoukisei = defaultdict(lambda: int((datetime.now() + settings.get("timezone", timedelta(hours=0))).timestamp()) - 10)
 room_count = defaultdict(lambda: 0)
-room_list = defaultdict(lambda: {})
 global_count = 0
-global_list = {}
 
 # .envがあった場合、優先的にロード
 if os.path.isfile(".env"):
@@ -651,13 +649,7 @@ def page_not_found(error):
 @sio.event
 async def connect(sid, environ, auth):
 	global global_count
-	global global_list
-	if global_list.get(environ['REMOTE_ADDR'], None) == None:
-		global_list[environ['REMOTE_ADDR']] = sid
-		global_count += 1
-	else:
-		global_list["tajuu"] = sid
-		print("not count it's 多重接続 (global)")
+	global_count += 1
 	await sio.emit('global_count_event', {'message': 'client connected', 'global_count': global_count})
 	print(f'connected', sid)
 	print('connected member count', global_count)
@@ -683,44 +675,20 @@ def get_sid_rooms(sid):
 @sio.event
 async def disconnect(sid):
 	global global_count
-	global global_list
-	for key,value in list(global_list.items()):
-		if value == sid:
-			if key == "tajuu":
-				a = None
-			else:
-				global_count -= 1
-	for key,value in list(global_list.items()):
-		if value == sid:
-			del global_list[key]
+	global_count -= 1
 	await sio.emit('global_count_event', {'message': 'client disconnected', 'global_count': global_count})
 	for room in get_sid_rooms(sid):
-		for key,value in list(room_list.items()):
-			if value == sid:
-				if key != "tajuu":
-					room_count[room] -= 1
-					del room_list[key]
+		room_count[room] -= 1
 		await sio.emit('count_event', {'message': 'client disconnected', 'clients': room_count[room]}, room=room)
 	print('disconnected', sid)
 	print('connected member count', global_count)
 
 @sio.event
 async def join_room(sid, room):
-	ipaddr = None  # 初期化
 	await sio.enter_room(sid, room)
-	for key, value in list(global_list.items()):
-		if value == sid:
-			ipaddr = key
-			break
-	print(ipaddr)
-	if room_list.get(ipaddr, None) is None and ipaddr != "tajuu":
-		room_list[ipaddr] = sid
-		room_count[room] += 1
-	else:
-		room_list["tajuu"] = sid
-		print("not count it's 多重接続 (room)")
+	room_count[room] += 1
 	await sio.emit('count_event', {'message': 'client connected', 'clients': room_count[room]}, room=room)
-	print('joined', room)
+	print('joinned', room)
 	print('connected member count', room_count[room])
 
 print("Mint 起動します")
