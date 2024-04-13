@@ -16,8 +16,7 @@
 	</head>
 	<body style="padding: 10px; background-image: url('/img/ba.gif');">
 		<div class="thread_member_count">
-			<span id="member_count"></span> <br>
-			<span id="global_member_count"></span>
+			connected users: <span id="member_count"></span> / <span id="global_member_count"></span>
 		</div>
 
 		<div class="ue">
@@ -79,15 +78,15 @@
 				});
 
 				socket.on('count_event', (data) => {
-					console.log('Received count_event:', data);
+					console.log('Received message_event:', data);
 					let member_count = document.getElementById("member_count");
-					member_count.innerHTML = "現在"+data["clients"]+"人が閲覧中！";
+					member_count.innerHTML = data["clients"];
 				});
 
 				socket.on('global_count_event', (data) => {
-					console.log('Received global_count_event:', data);
+					console.log('Received message_event:', data);
 					let member_count = document.getElementById("global_member_count");
-					member_count.innerHTML = "サーバー全体では"+data["global_count"]+"人が閲覧中！";
+					member_count.innerHTML = data["global_count"];
 				});
 			}
 		</script>

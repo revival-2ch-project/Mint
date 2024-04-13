@@ -80,13 +80,13 @@ async def topPage():
 		bbses = await connection.fetch("SELECT * FROM bbs")
 		host = request.host
 
-		settings = json.loads(request.cookies.get('settings', "{}"))
-		notification_server_select = settings.get('notification_server_select', "ws")
-		playsoundOnThread = settings.get('playsoundOnThread', "on")
-		thumbnail_in_thread = settings.get('thumbnail_in_thread', "on")
-		id_ng = settings.get('id_ng', [])
-		word_ng = settings.get('word_ng', [])
-		ngword_select = settings.get('ngword_select', "mask")
+		sett = json.loads(request.cookies.get('settings', "{}"))
+		notification_server_select = sett.get('notification_server_select', "ws")
+		playsoundOnThread = sett.get('playsoundOnThread', "on")
+		thumbnail_in_thread = sett.get('thumbnail_in_thread', "on")
+		id_ng = sett.get('id_ng', [])
+		word_ng = sett.get('word_ng', [])
+		ngword_select = sett.get('ngword_select', "mask")
 		return await render_template("index.html",
 								bbses=bbses,
 								settings=settings,
@@ -130,13 +130,13 @@ async def js(filename):
 @quart_app.route('/settings')
 async def setting_menu():
 	host = request.host
-	settings = json.loads(request.cookies.get('settings', "{}"))
-	notification_server_select = settings.get('notification_server_select', "ws")
-	playsoundOnThread = settings.get('playsoundOnThread', "on")
-	thumbnail_in_thread = settings.get('thumbnail_in_thread', "on")
-	id_ng = settings.get('id_ng', [])
-	word_ng = settings.get('word_ng', [])
-	ngword_select = settings.get('ngword_select', "mask")
+	sett = json.loads(request.cookies.get('settings', "{}"))
+	notification_server_select = sett.get('notification_server_select', "ws")
+	playsoundOnThread = sett.get('playsoundOnThread', "on")
+	thumbnail_in_thread = sett.get('thumbnail_in_thread', "on")
+	id_ng = sett.get('id_ng', [])
+	word_ng = sett.get('word_ng', [])
+	ngword_select = sett.get('ngword_select', "mask")
 	return await render_template("setting.html",
 							  settings=settings,
 							  ver=mintverinfo,
@@ -203,13 +203,13 @@ async def bbsPage(bbs: str):
 	threads_two = threads[mid:]
 	host = request.host
 
-	settings = json.loads(request.cookies.get('settings', "{}"))
-	notification_server_select = settings.get('notification_server_select', "ws")
-	playsoundOnThread = settings.get('playsoundOnThread', "on")
-	thumbnail_in_thread = settings.get('thumbnail_in_thread', "on")
-	id_ng = settings.get('id_ng', [])
-	word_ng = settings.get('word_ng', [])
-	ngword_select = settings.get('ngword_select', "mask")
+	sett = json.loads(request.cookies.get('settings', "{}"))
+	notification_server_select = sett.get('notification_server_select', "ws")
+	playsoundOnThread = sett.get('playsoundOnThread', "on")
+	thumbnail_in_thread = sett.get('thumbnail_in_thread', "on")
+	id_ng = sett.get('id_ng', [])
+	word_ng = sett.get('word_ng', [])
+	ngword_select = sett.get('ngword_select', "mask")
 	return await render_template("bbsPage.html",
 							  bbs_name=bbs_name,
 							  description=description,
@@ -588,13 +588,13 @@ async def threadPage(bbs: str, key: int):
 			return "Thread not found", 404  # スレッドが見つからない場合は404エラーを返すなどの処理を行う
 		res_data = json.loads(values["data"])
 
-		settings = json.loads(request.cookies.get('settings', "{}"))
-		notification_server_select = settings.get('notification_server_select', "ws")
-		playsoundOnThread = settings.get('playsoundOnThread', "on")
-		thumbnail_in_thread = settings.get('thumbnail_in_thread', "on")
-		id_ng = settings.get('id_ng', [])
-		word_ng = settings.get('word_ng', [])
-		ngword_select = settings.get('ngword_select', "mask")
+		sett = json.loads(request.cookies.get('settings', "{}"))
+		notification_server_select = sett.get('notification_server_select', "ws")
+		playsoundOnThread = sett.get('playsoundOnThread', "on")
+		thumbnail_in_thread = sett.get('thumbnail_in_thread', "on")
+		id_ng = sett.get('id_ng', [])
+		word_ng = sett.get('word_ng', [])
+		ngword_select = sett.get('ngword_select', "mask")
 
 		print(thumbnail_in_thread)
 		print(bool(thumbnail_in_thread))
@@ -638,6 +638,8 @@ async def threadPage(bbs: str, key: int):
 			id_ng=id_ng,
 			word_ng=word_ng,
 			ngword_select=ngword_select,
+			start=int(request.args.get('start', 1)),
+			end=int(request.args.get('end', len(res_data["data"])))
 		)
 
 @quart_app.errorhandler(404)

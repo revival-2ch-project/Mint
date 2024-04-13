@@ -21,32 +21,31 @@
 	</head>
 	<body style="background-color: #EFEFEF; padding: 10px;">
 		<div class="thread_member_count">
-			<span id="member_count"></span> <br>
-			<span id="global_member_count"></span>
+			connected users: <span id="member_count"></span> / <span id="global_member_count"></span>
 		</div>
 
 		<div class="top">
-			<a href="/{{ bbs_id }}/">■掲示板に戻る■</a>
+			<a href="/{{ bbs_id }}/">■掲示板に戻る■</a> <a href="?">全部</a> <a href="?start={{res_data | length - 50}}">最新50</a> <a href="?start=1&end=100">1-100</a> <a href="?start=101&end=200">101-200</a> <a href="?start=201&end=300">201-300</a>
 			<hr>
 			<h1>{{ data.title }}</h1>
 		</div>
 	
 		<div class="res" id="ress">
-			{% for post in res_data %}
-				{%- set ns = namespace(hidden=false) -%}
+			{% for post in res_data[start-1:end] %}
+				{% set ns = namespace(hidden=false) %}
 				{% if ngword_select == 'hide_res' %}
 					{% for word in word_ng %}
 						{% if word in post.content or word in post.name %}
-							{%- set ns.hidden = true -%}
+							{% set ns.hidden = true %}
 						{% endif %}
 					{% endfor %}
 				{% endif %}
 				{% if not ns.hidden and post.id not in id_ng %}
 					<a id="thread_{{ loop.index }}"></a>
 					{% if post.mail %}
-						<dt>{{ loop.index }}：<font color="green"><b><a href="mailto:{{ post.mail }}">{{ post.name | safe }}</a></b></font>：{{ post.date }} ID:{{ post.id }}</dt>
+						<dt>{{ loop.index + start-1 }}：<font color="green"><b><a href="mailto:{{ post.mail }}">{{ post.name | safe }}</a></b></font>：{{ post.date }} ID:{{ post.id }}</dt>
 					{% else %}
-						<dt>{{ loop.index }}：<font color="green"><b>{{ post.name | safe }}</b></font>：{{ post.date }} ID:{{ post.id }}</dt>
+						<dt>{{ loop.index + start-1 }}：<font color="green"><b>{{ post.name | safe }}</b></font>：{{ post.date }} ID:{{ post.id }}</dt>
 					{% endif %}
 					<dd style="overflow-wrap: break-word;">{{ post.content | safe }}<br><br></dd>
 				{% else %}
@@ -55,14 +54,14 @@
 					<dd style="overflow-wrap: break-word;"><u>設定により非表示になっています。</u><br><br></dd>
 				{% endif %}
 			{% endfor %}
-		</div>
+		</div>		
 		
 		<hr>
 		<div class="center">
-			<a href="https://twitter.com/intent/tweet?text=&url={{ ssloption }}://{{ request.host }}/test/read.cgi/{{ bbs_id }}/{{ key }}" class="twitter-hashtag-button" data-text="わあああ" data-url="https://14chan.jp/">X(旧Twitter) でシェア</a>
+			<a href="https://twitter.com/intent/tweet?text=&url={{ ssloption }}://{{ request.host }}/test/read.cgi/{{ bbs_id }}/{{ key }}">X(旧Twitter) でシェア</a>
 		</div>
 		<hr>
-		<a href="/{{ bbs_id }}/">掲示板に戻る</a>
+		<a href="/{{ bbs_id }}/">掲示板に戻る</a> <a href="?">全部</a> <a href="?start={{res_data | length - 50}}">最新50</a> <a href="?start=1&end=100">1-100</a> <a href="?start=101&end=200">101-200</a> <a href="?start=201&end=300">201-300</a>
 		<a id="sita"></a>
 		<div class="kakikomi" style="padding: 1px;">
 			<form method="post" action="/test/bbs.cgi">
@@ -101,13 +100,13 @@
 				socket.on('count_event', (data) => {
 					console.log('Received message_event:', data);
 					let member_count = document.getElementById("member_count");
-					member_count.innerHTML = "現在"+data["clients"]+"人が閲覧中！";
+					member_count.innerHTML = data["clients"];
 				});
 
 				socket.on('global_count_event', (data) => {
 					console.log('Received message_event:', data);
 					let member_count = document.getElementById("global_member_count");
-					member_count.innerHTML = "サーバー全体では"+data["global_count"]+"人が閲覧中！";
+					member_count.innerHTML = data["global_count"];
 				});
 
 				socket.on('thread_writed', (data) => {
@@ -142,15 +141,20 @@
 					let urls = [];
 					urls = data["content"].match(urlPattern);
 
-					// 抽出した画像リンクを<img>タグで置換して返す
-					for (const url of urls) {
-						let imgTag;
-						if (thumbnail_in_thread != "on") {
-							imgTag = `<a href="${url}" data-lightbox="group">${url}</a>`;
-						} else {
-							imgTag = `<a href="${url}" data-lightbox="group"><img src="${url}" style="width: 30%; height: 30%;" loading="lazy"></a>`;
+					if (urls) {
+						// 抽出した画像リンクを<img>タグで置換して返す
+						for (const url of urls) {
+							let imgTag;
+							if (thumbnail_in_thread != "on") {
+								imgTag = `<a href="${url}" data-lightbox="group">${url}</a>`;
+							} else {
+								imgTag = `<a href="${url}" data-lightbox="group"><img src="${url}" style="width: 30%; height: 30%;" loading="lazy"></a>`;
+							}
+							data["content"] = data["content"].replace(`<a href="${url}">${url}</a>`, imgTag);
 						}
-						data["content"] = data["content"].replace(`<a href="${url}">${url}</a>`, imgTag);
+					} else {
+						// urlsがnullまたはundefinedの場合の処理を記述する
+						console.log("No image URLs found");
 					}
 
 					hidden = false;
@@ -192,7 +196,7 @@
 						}
 					}else{
 						// hiddenがfalseで、post.idがid_ngに含まれない場合にレスを表示
-						if (!hidden && !id_ng.includes(post.id)) {
+						if (!hidden && !ngids.includes(data["id"])) {
 							if (data["mail"] != "") {
 								let content = '<dt>'+data["count"]+' ：<font color="green"><b><a href="mailto:'+data["mail"]+'">'+data["name"]+'</a></b></font>：'+formattedDate+' ID:'+data["id"]+'</dt>';
 								content += '<dd style="overflow-wrap: break-word;"> '+data["content"]+' <br><br></dd>';
