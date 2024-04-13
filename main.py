@@ -3,6 +3,7 @@ Mintのメインソースコード
 """
 
 # まずライブラリのインポート(Quart, asyncpg, os)
+import quart_flask_patch
 from quart import Quart, render_template, send_from_directory, request, Response, make_response
 from jinja2.ext import loopcontrols
 import asyncpg
@@ -20,6 +21,8 @@ from collections import defaultdict
 import feedgen.feed
 import urllib.parse
 import mimetypes
+from flask_caching import Cache
+import asyncio
 
 print("Mint 準備中")
 
@@ -39,6 +42,9 @@ DATABASE_URL = os.getenv("database")
 quart_app = Quart(__name__)
 sio = socketio.AsyncServer(async_mode='asgi')
 app = socketio.ASGIApp(sio, quart_app)
+
+cache = Cache(config={'CACHE_TYPE': 'SimpleCache'})
+cache.init_app(quart_app, config={'CACHE_TYPE': 'SimpleCache'})
 
 quart_app.jinja_env.filters['encode_sjis'] = lambda u: codecs.encode(str(u), 'shift_jis')
 quart_app.jinja_env.add_extension(loopcontrols)
@@ -75,6 +81,7 @@ async def hello():
 	return "Mint BBS Test"
 """
 @quart_app.route("/")
+@cache.cached(timeout=3600)
 async def topPage():
 	async with quart_app.db_pool.acquire() as connection:
 		bbses = await connection.fetch("SELECT * FROM bbs")
@@ -101,12 +108,14 @@ async def topPage():
 							)
 
 @quart_app.route('/css/<path:filename>')
+@cache.cached(timeout=3600)
 async def css(filename):
 	response = await send_from_directory('./static/css/', filename)
 	response.content_type = "text/css"
 	return response
 
 @quart_app.route('/img/<path:filename>')
+@cache.cached(timeout=3600)
 async def img(filename):
 	response = await send_from_directory('./static/img/', filename)
 	mime_type, _ = mimetypes.guess_type(f'./static/img/{filename}')
@@ -114,6 +123,7 @@ async def img(filename):
 	return response
 
 @quart_app.route('/sounds/<path:filename>')
+@cache.cached(timeout=3600)
 async def sounds(filename):
 	response = await send_from_directory('./static/sounds/', filename)
 	mime_type, _ = mimetypes.guess_type(f'./static/sounds/{filename}')
@@ -121,6 +131,7 @@ async def sounds(filename):
 	return response
 
 @quart_app.route('/js/<path:filename>')
+@cache.cached(timeout=3600)
 async def js(filename):
 	response = await send_from_directory('./static/js/', filename)
 	mime_type, _ = mimetypes.guess_type(f'./static/js/{filename}')
@@ -181,6 +192,7 @@ def record_to_dict(record):
 	return dict(record)
 
 @quart_app.route("/<string:bbs>/")
+@cache.cached(timeout=300)
 async def bbsPage(bbs: str):
 	async with quart_app.db_pool.acquire() as connection:
 		bbs_name = await connection.fetchval("SELECT bbs_name FROM bbs WHERE id = $1", bbs)
@@ -434,6 +446,7 @@ async def write():
 				response = await make_response(await render_template("kakikomi_ok.html", bbs_id=bbs, key=int(date.timestamp()), monazilla=monazilla))
 			response.set_cookie("NAME", value=NAME, expires=int(datetime.now().timestamp()) + 60*60*24*365*10)
 			response.set_cookie("MAIL", value=MAIL, expires=int(datetime.now().timestamp()) + 60*60*24*365*10)
+			await asyncio.to_thread(cache.clear)
 			return response
 		else:
 			async with quart_app.db_pool.acquire() as connection:
@@ -496,6 +509,7 @@ async def write():
 				response = await make_response(await render_template("kakikomi_ok.html", bbs_id=bbs, key=int(date.timestamp()) if key is None else key, monazilla=monazilla))
 			response.set_cookie("NAME", value=NAME, expires=int(datetime.now().timestamp()) + 60*60*24*365*10)
 			response.set_cookie("MAIL", value=MAIL, expires=int(datetime.now().timestamp()) + 60*60*24*365*10)
+			await asyncio.to_thread(cache.clear)
 			return response
 	else:
 		if if_utf8 is None:
@@ -504,6 +518,7 @@ async def write():
 			return await render_template("kakikomi_Error.html", message=f"連投規制中です！あと{(rentoukisei[ipaddr] + 10) - int(date.timestamp())}秒お待ち下さい。")
 
 @quart_app.route("/<string:bbs>/subject.txt")
+@cache.cached(timeout=300)
 async def subjecttxt(bbs: str):
 	async with quart_app.db_pool.acquire() as connection:
 		raw_threads = await connection.fetch("SELECT * FROM threads WHERE bbs_id = $1", bbs)
@@ -517,6 +532,7 @@ async def subjecttxt(bbs: str):
 	return response
 
 @quart_app.route("/<string:bbs>/SETTING.TXT")
+@cache.cached(timeout=3600)
 async def threadSettingTxt(bbs: str):
 	async with quart_app.db_pool.acquire() as connection:
 		values = await connection.fetchrow("SELECT * FROM bbs WHERE id = $1", bbs)
@@ -534,6 +550,7 @@ async def threadSettingTxt(bbs: str):
 		return response
 
 @quart_app.route("/<string:bbs>/threads.rdf")
+@cache.cached(timeout=300)
 async def rss_feed(bbs: str):
 	async with quart_app.db_pool.acquire() as connection:
 		bbs_name = await connection.fetchval("SELECT bbs_name FROM bbs WHERE id = $1", bbs)
@@ -557,6 +574,7 @@ async def rss_feed(bbs: str):
 	return content
 
 @quart_app.route("/<string:bbs>/dat/<int:key>.dat")
+@cache.cached(timeout=300)
 async def threadDat(bbs: str, key: int):
 	async with quart_app.db_pool.acquire() as connection:
 		values = await connection.fetchrow("SELECT * FROM threads WHERE id = $1 AND bbs_id = $2", key, bbs)
@@ -581,6 +599,7 @@ async def threadDat(bbs: str, key: int):
 		return response
 
 @quart_app.route("/test/read.cgi/<string:bbs>/<int:key>/")
+@cache.cached(timeout=300)
 async def threadPage(bbs: str, key: int):
 	async with quart_app.db_pool.acquire() as connection:
 		values = await connection.fetchrow("SELECT * FROM threads WHERE id = $1 AND bbs_id = $2", key, bbs)
@@ -595,9 +614,6 @@ async def threadPage(bbs: str, key: int):
 		id_ng = sett.get('id_ng', [])
 		word_ng = sett.get('word_ng', [])
 		ngword_select = sett.get('ngword_select', "mask")
-
-		print(thumbnail_in_thread)
-		print(bool(thumbnail_in_thread))
 
 		for i, v in enumerate(res_data.get("data", [])):
 			res_data["data"][i]["date"] = datetime.fromtimestamp(v["date"]).strftime("%Y/%m/%d(%a) %H:%M:%S.%f")
@@ -643,6 +659,7 @@ async def threadPage(bbs: str, key: int):
 		)
 
 @quart_app.errorhandler(404)
+@cache.cached(timeout=3600)
 def page_not_found(error):
 	return "404 Not Found", 404
 

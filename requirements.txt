@@ -5,3 +5,5 @@ chardet
 hypercorn
 python_socketio
 feedgen
+Flask-Caching
+quart-flask-patch
