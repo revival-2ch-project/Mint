@@ -23,14 +23,9 @@ import urllib.parse
 import mimetypes
 from flask_caching import Cache
 import asyncio
-import sys
 
 print("Mint 準備中")
 
-if sys.platform != 'win32':
-	print("uvloopが動かせる環境であることが確認されました。uvloopで動かしてみます。")
-	import uvloop
-	asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 rentoukisei = defaultdict(lambda: int((datetime.now() + settings.get("timezone", timedelta(hours=0))).timestamp()) - 10)
 room_count = defaultdict(lambda: 0)
 global_count = 0

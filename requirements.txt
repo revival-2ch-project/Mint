@@ -7,4 +7,3 @@ python_socketio
 feedgen
 Flask-Caching
 quart-flask-patch
-uvloop; sys.platform != 'win32'
