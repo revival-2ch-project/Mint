@@ -181,16 +181,16 @@
 						// hiddenがfalseで、data["id"]がngidsに含まれない場合にレスを表示
 						if (!hidden && !ngids.includes(data["id"])) {
 							if (data["mail"] != "") {
-								let content = '<dt><span onclick="addMessage("&gt;&gt;'+data["count"]+'");">'+data["count"]+' ：</span><font color="green"><b><a href="mailto:'+data["mail"]+'">'+data["name"]+'</a></b></font>：'+formattedDate+' ID:'+data["id"]+'</dt>';
+								let content = '<dt><span onclick=`addMessage("&gt;&gt;'+data["count"]+'");`>'+data["count"]+' ：</span><font color="green"><b><a href="mailto:'+data["mail"]+'">'+data["name"]+'</a></b></font>：'+formattedDate+' ID:'+data["id"]+'</dt>';
 								content += '<dd style="overflow-wrap: break-word;"> '+data["content"]+' <br><br></dd>';
 								document.getElementById("ress").innerHTML += content;
 							}else{
-								let content = '<dt><span onclick="addMessage("&gt;&gt;'+data["count"]+'");">'+data["count"]+' ：</span><font color="green"><b><a href="mailto:'+data["mail"]+'">'+data["name"]+'</a></b></font>：'+formattedDate+' ID:'+data["id"]+'</dt>';
+								let content = '<dt><span onclick=`addMessage("&gt;&gt;'+data["count"]+'");`>'+data["count"]+' ：</span><font color="green"><b><a href="mailto:'+data["mail"]+'">'+data["name"]+'</a></b></font>：'+formattedDate+' ID:'+data["id"]+'</dt>';
 								content += '<dd style="overflow-wrap: break-word;"> '+data["content"]+' <br><br></dd>';
 								document.getElementById("ress").innerHTML += content;
 							}
 						}else{
-							let content = '<dt><span onclick="addMessage("&gt;&gt;'+data["count"]+'");">'+data["count"]+' ：</span><font color="green">Hidden</font>：'+data["date"]+' ID:Hidden</dt>';
+							let content = '<dt><span onclick=`addMessage("&gt;&gt;'+data["count"]+'");`>'+data["count"]+' ：</span><font color="green">Hidden</font>：'+data["date"]+' ID:Hidden</dt>';
 							content += '<dd style="overflow-wrap: break-word;"> <u>設定により非表示になっています。</u> <br><br></dd>';
 							document.getElementById("ress").innerHTML += content;
 						}
@@ -198,11 +198,11 @@
 						// hiddenがfalseで、post.idがid_ngに含まれない場合にレスを表示
 						if (!hidden && !ngids.includes(data["id"])) {
 							if (data["mail"] != "") {
-								let content = '<dt><span onclick="addMessage("&gt;&gt;'+data["count"]+'");">'+data["count"]+' ：</span><font color="green"><b><a href="mailto:'+data["mail"]+'">'+data["name"]+'</a></b></font>：'+formattedDate+' ID:'+data["id"]+'</dt>';
+								let content = '<dt><span onclick=`addMessage("&gt;&gt;'+data["count"]+'");`>'+data["count"]+' ：</span><font color="green"><b><a href="mailto:'+data["mail"]+'">'+data["name"]+'</a></b></font>：'+formattedDate+' ID:'+data["id"]+'</dt>';
 								content += '<dd style="overflow-wrap: break-word;"> '+data["content"]+' <br><br></dd>';
 								document.getElementById("ress").innerHTML += content;
 							}else{
-								let content = '<dt><span onclick="addMessage("&gt;&gt;'+data["count"]+'");">'+data["count"]+' ：</span><font color="green"><b>'+data["name"]+'</b></font>：'+data["date"]+' ID:'+data["id"]+'</dt>';
+								let content = '<dt><span onclick=`addMessage("&gt;&gt;'+data["count"]+'");`>'+data["count"]+' ：</span><font color="green"><b>'+data["name"]+'</b></font>：'+data["date"]+' ID:'+data["id"]+'</dt>';
 								content += '<dd style="overflow-wrap: break-word;"> '+data["content"]+' <br><br></dd>';
 								document.getElementById("ress").innerHTML += content;
 							}
