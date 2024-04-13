@@ -119,7 +119,6 @@ async def css(filename):
 async def img(filename):
 	response = await send_from_directory('./static/img/', filename)
 	mime_type, _ = mimetypes.guess_type(f'./static/img/{filename}')
-	response.content_type = mime_type
 	return response
 
 @quart_app.route('/sounds/<path:filename>')
@@ -127,7 +126,6 @@ async def img(filename):
 async def sounds(filename):
 	response = await send_from_directory('./static/sounds/', filename)
 	mime_type, _ = mimetypes.guess_type(f'./static/sounds/{filename}')
-	response.content_type = mime_type
 	return response
 
 @quart_app.route('/js/<path:filename>')
@@ -135,7 +133,7 @@ async def sounds(filename):
 async def js(filename):
 	response = await send_from_directory('./static/js/', filename)
 	mime_type, _ = mimetypes.guess_type(f'./static/js/{filename}')
-	response.content_type = mime_type
+	response.content_type = f"application/javascript; charset={mime_type}"
 	return response
 
 @quart_app.route('/settings')
@@ -229,6 +227,30 @@ async def bbsPage(bbs: str):
 							  threads_two=threads_two,
 							  anonymous_name=anonymous_name,
 							  bbs_id=bbs,
+							  settings=settings,
+							  ver=mintverinfo,
+							  host=host,
+							  notification_server_select=notification_server_select,
+							  playsoundOnThread=playsoundOnThread,
+							  thumbnail_in_thread=thumbnail_in_thread,
+							  id_ng=id_ng,
+							  word_ng=word_ng,
+							  ngword_select=ngword_select,
+				 )
+
+@quart_app.route("/search")
+@cache.cached(timeout=5)
+async def search():
+	host = request.host
+
+	sett = json.loads(request.cookies.get('settings', "{}"))
+	notification_server_select = sett.get('notification_server_select', "ws")
+	playsoundOnThread = sett.get('playsoundOnThread', "on")
+	thumbnail_in_thread = sett.get('thumbnail_in_thread', "on")
+	id_ng = sett.get('id_ng', [])
+	word_ng = sett.get('word_ng', [])
+	ngword_select = sett.get('ngword_select', "mask")
+	return await render_template("search.html",
 							  settings=settings,
 							  ver=mintverinfo,
 							  host=host,
@@ -599,7 +621,6 @@ async def threadDat(bbs: str, key: int):
 		return response
 
 @quart_app.route("/test/read.cgi/<string:bbs>/<int:key>/")
-@cache.cached(timeout=300)
 async def threadPage(bbs: str, key: int):
 	async with quart_app.db_pool.acquire() as connection:
 		values = await connection.fetchrow("SELECT * FROM threads WHERE id = $1 AND bbs_id = $2", key, bbs)

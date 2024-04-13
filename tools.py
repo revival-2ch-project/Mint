@@ -89,7 +89,7 @@ class BBSTools():
 
 	def convert_image_link(text, flag = False):
 		# 正規表現を使用して画像リンクを抽出
-		url_pattern = r'(https?://\S+\.(?:png|jpg|jpeg|gif|webp|apng))(?=\s|\"|\')'  # 画像リンクのパターン
+		url_pattern = r'(https?://\S+\.(?:png|jpg|jpeg|gif|webp|apng|svg))(?=\s|\"|\')'  # 画像リンクのパターン
 		urls = re.findall(url_pattern, text)
 
 		# 抽出した画像リンクを<img>タグで置換して返す
