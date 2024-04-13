@@ -82,7 +82,7 @@ async def topPage():
 		bbses = await connection.fetch("SELECT * FROM bbs")
 		host = request.host
 
-		settings = json.loads(request.cookies.get('settings'))
+		settings = json.loads(request.cookies.get('settings', "{}"))
 		notification_server_select = settings.get('notification_server_select', "ws")
 		playsoundOnThread = settings.get('playsoundOnThread', "on")
 		thumbnail_in_thread = settings.get('thumbnail_in_thread', "on")
@@ -132,7 +132,7 @@ async def js(filename):
 @quart_app.route('/settings')
 async def setting_menu():
 	host = request.host
-	settings = json.loads(request.cookies.get('settings'))
+	settings = json.loads(request.cookies.get('settings', "{}"))
 	notification_server_select = settings.get('notification_server_select', "ws")
 	playsoundOnThread = settings.get('playsoundOnThread', "on")
 	thumbnail_in_thread = settings.get('thumbnail_in_thread', "on")
@@ -205,7 +205,7 @@ async def bbsPage(bbs: str):
 	threads_two = threads[mid:]
 	host = request.host
 
-	settings = json.loads(request.cookies.get('settings'))
+	settings = json.loads(request.cookies.get('settings', "{}"))
 	notification_server_select = settings.get('notification_server_select', "ws")
 	playsoundOnThread = settings.get('playsoundOnThread', "on")
 	thumbnail_in_thread = settings.get('thumbnail_in_thread', "on")
@@ -590,7 +590,7 @@ async def threadPage(bbs: str, key: int):
 			return "Thread not found", 404  # スレッドが見つからない場合は404エラーを返すなどの処理を行う
 		res_data = json.loads(values["data"])
 
-		settings = json.loads(request.cookies.get('settings'))
+		settings = json.loads(request.cookies.get('settings', "{}"))
 		notification_server_select = settings.get('notification_server_select', "ws")
 		playsoundOnThread = settings.get('playsoundOnThread', "on")
 		thumbnail_in_thread = settings.get('thumbnail_in_thread', "on")
