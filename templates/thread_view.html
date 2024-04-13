@@ -139,7 +139,8 @@
 
 					// 正規表現を使用して画像リンクを抽出
 					const urlPattern = /(https?:\/\/\S+\.(?:png|jpg|jpeg|gif|webp|apng))(?=\s|\"|\')/g;  // 画像リンクのパターン
-					const urls = data["content"].match(urlPattern);
+					let urls = [];
+					urls = data["content"].match(urlPattern);
 
 					// 抽出した画像リンクを<img>タグで置換して返す
 					for (const url of urls) {
