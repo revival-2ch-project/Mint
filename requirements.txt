@@ -1,10 +1,6 @@
-quart
+fastapi[all]
 asyncpg
-passlib
-chardet
-hypercorn
-python_socketio
-feedgen
-Flask-Caching
-quart-flask-patch
-uvloop; sys.platform != 'win32'
+python-dotenv
+alembic
+psycopg2
+python-socketio
