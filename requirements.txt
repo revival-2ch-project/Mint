@@ -4,3 +4,4 @@ python-dotenv
 alembic
 psycopg2
 python-socketio
+bcrypt

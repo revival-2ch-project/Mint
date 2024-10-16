@@ -27,7 +27,10 @@ def upgrade() -> None:
         sa.Column("name", sa.String(), nullable=False),
         sa.Column("account_id", sa.String(), nullable=False),
         sa.Column(
-            "created_at", sa.DateTime(timezone=True), default="now()", nullable=False
+            "created_at",
+            sa.DateTime(timezone=True),
+            default=sa.func.now(),
+            nullable=False,
         ),
         sa.Column("content", sa.String(), nullable=False),
     )

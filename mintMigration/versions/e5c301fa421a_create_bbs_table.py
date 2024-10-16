@@ -20,16 +20,32 @@ depends_on: Union[str, Sequence[str], None] = None
 
 def upgrade() -> None:
     op.create_table(
-        "bbs",
+        "boards",
         sa.Column("id", sa.String(), primary_key=True),
         sa.Column("name", sa.String(), nullable=False),
-        sa.Column("anonymous_name", sa.String(), default="名無しさん", nullable=False),
-        sa.Column("deleted_name", sa.String(), default="あぼーん", nullable=False),
-        sa.Column("subject_count", sa.Integer, default=64, nullable=False),
-        sa.Column("name_count", sa.Integer, default=50, nullable=False),
-        sa.Column("message_count", sa.Integer, default=2000, nullable=False),
+        sa.Column(
+            "anonymous_name",
+            sa.String(),
+            server_default=sa.text("名無しさん"),
+            nullable=False,
+        ),
+        sa.Column(
+            "deleted_name",
+            sa.String(),
+            server_default=sa.text("あぼーん"),
+            nullable=False,
+        ),
+        sa.Column(
+            "subject_count", sa.Integer, server_default=sa.text("64"), nullable=False
+        ),
+        sa.Column(
+            "name_count", sa.Integer, server_default=sa.text("50"), nullable=False
+        ),
+        sa.Column(
+            "message_count", sa.Integer, server_default=sa.text("2000"), nullable=False
+        ),
     )
 
 
 def downgrade() -> None:
-    op.drop_table("bbs")
+    op.drop_table("boards")

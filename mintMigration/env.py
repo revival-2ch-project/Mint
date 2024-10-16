@@ -30,6 +30,7 @@ target_metadata = None
 
 config.set_main_option("sqlalchemy.url", os.getenv("dsn"))
 
+
 def run_migrations_offline() -> None:
     """Run migrations in 'offline' mode.
 
