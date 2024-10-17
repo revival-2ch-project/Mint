@@ -2,8 +2,8 @@ import os
 
 import dotenv
 
-from .database import DatabaseService
 from ..objects import MetaData
+from .database import DatabaseService
 
 dotenv.load_dotenv()
 

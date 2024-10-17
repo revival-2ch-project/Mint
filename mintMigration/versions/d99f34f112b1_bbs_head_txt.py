@@ -20,19 +20,20 @@ depends_on: Union[str, Sequence[str], None] = None
 
 def upgrade() -> None:
     head = """
-        <div style="text-align: center; margin: 1.2em 0">
-            <span style="color: red">クリックで救える命が…ないです(｀･ω･´)ｼｬｷｰﾝ</font>
-        </div>
+<div style="text-align: center; margin: 1.2em 0">
+    <span style="color: red">クリックで救える命が…ないです(｀･ω･´)ｼｬｷｰﾝ</font>
+</div>
 
-        <b>掲示板使用上の注意</b>
-        <ul style="font-weight:bold;">
-            <li>･転んでも泣かない</li>
-            <li>･出されたものは残さず食べる</li>
-            <li>･Perl使いを尊重する</li>
-        </ul>
+<b>掲示板使用上の注意</b>
+<ul style="font-weight:bold;">
+    <li>･転んでも泣かない</li>
+    <li>･出されたものは残さず食べる</li>
+    <li>･Python使いを尊重する</li>
+</ul>
     """
     op.add_column(
-        "boards", sa.Column("head", sa.String(), default=head, nullable=False)
+        "boards",
+        sa.Column("head", sa.String(), server_default=sa.text(head), nullable=False),
     )
 
 

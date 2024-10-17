@@ -22,7 +22,7 @@ def upgrade() -> None:
     op.create_table(
         "threads",
         sa.Column("id", sa.Integer, primary_key=True),
-        sa.Column("bbs", sa.String(), nullable=False),
+        sa.Column("board", sa.String(), nullable=False),
         sa.Column("title", sa.String(), nullable=False),
         sa.Column("name", sa.String(), nullable=False),
         sa.Column("account_id", sa.String(), nullable=False),

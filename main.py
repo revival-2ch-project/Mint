@@ -1,10 +1,12 @@
 import asyncio
-import logging
 import importlib
+import logging
+import os
 from contextlib import asynccontextmanager
 
 import socketio
 from fastapi import FastAPI
+from fastapi.responses import ORJSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from app.services.database import DatabaseService
@@ -34,15 +36,28 @@ fastapi = FastAPI(
     version=__mintVersion__,
     summary=f"{__mintName__} v{__mintVersion__} Codename: {__mintCodeName__}",
     lifespan=lifespan,
+    default_response_class=ORJSONResponse,
 )
 sio = socketio.AsyncServer()
 app = socketio.ASGIApp(sio, fastapi)
 
 fastapi.mount("/static", StaticFiles(directory="static"), name="static")
 
-fastapi.include_router(importlib.import_module("app.routes.index").router)
-fastapi.include_router(importlib.import_module("app.routes.api.boards.show").router)
-fastapi.include_router(
-    importlib.import_module("app.routes.api.admin.request_admin").router
-)
-fastapi.include_router(importlib.import_module("app.routes.api.admin.login").router)
+routes_dir = "app/routes"
+
+
+def autoIncludeRouters(app: FastAPI, base_dir: str):
+    for root, dirs, files in os.walk(base_dir):
+        for file in files:
+            if file.endswith(".py") and file != "__init__.py":
+                module_path = (
+                    os.path.join(root, file).replace("/", ".").replace("\\", ".")[:-3]
+                )
+
+                module = importlib.import_module(module_path)
+
+                if hasattr(module, "router"):
+                    app.include_router(getattr(module, "router"))
+
+
+autoIncludeRouters(fastapi, routes_dir)

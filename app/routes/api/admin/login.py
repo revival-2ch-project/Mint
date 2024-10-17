@@ -3,8 +3,8 @@ import dotenv
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
-from ....services.database import DatabaseService
 from ....services.admin import AdminPanelSessionService
+from ....services.database import DatabaseService
 
 dotenv.load_dotenv()
 

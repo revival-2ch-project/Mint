@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 
-from ....services.database import DatabaseService
 from ....objects import Board
+from ....services.database import DatabaseService
 
 router = APIRouter()
 
